@@ -1,4 +1,4 @@
-# ✅ Scheduling App MVP Checklist
+# ✅ Velo MVP Checklist
 
 ## 🚀 Phase 1: Product Planning
 - [x] Define core problem: Simplify daily task scheduling via voice/text.
