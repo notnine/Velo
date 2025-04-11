@@ -3,16 +3,15 @@
 **Backend**
 - Python + FastAPI
 - PostgreSQL (via Supabase)
-- SQLAlchemy
-- Basic JWT authentication
+- Firebase Auth
 
-**Frontend**
-- HTMX + TailwindCSS (React planned for future)
-- Hosted on Netlify
+**Mobile Frontend**
+- React Native w/ Expo
+- react-native-voice
 
 **Payments**
 - Stripe (freemium model support)
 
 **Hosting**
-- Backend: Railway
-- Database: Supabase (hosted PostgreSQL)
+- Backend: Heroku
+- Database: Supabase (hosting PostgreSQL)
