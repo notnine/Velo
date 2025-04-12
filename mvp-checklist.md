@@ -1,76 +1,49 @@
-# ✅ Velo MVP Checklist WIP
+# ✅ Velo MVP Checklist
 
 ## 🚀 Phase 1: Product Planning
-- [x] Define core problem we're solving  
-- [x] Name the product: **Velo**  
-- [ ] Define 1–2 user personas  
-- [ ] Outline core MVP features (no extras)  
-- [ ] Map full user flow (Sign up → Create sprint → Add tasks → Track progress → View stats)  
+- [x] Define core problem: Simplify daily task scheduling via voice/text.
+- [x] Identify core MVP features:
+  - Daily to-do list with checkboxes
+  - Calendar view showing minimized tasks per day
+  - Voice integration for adding/scheduling tasks
+  - Text input for manual task addition
 
-## ✍️ Phase 2: Wireframes & Design
-- [ ] Create wireframes for core screens:
-  - [ ] Sign Up / Log In
-  - [ ] Sprint creation
-  - [ ] Task list / Daily dashboard
-  - [ ] Progress view (stats/points)
-  - [ ] Retrospective screen (optional)
-- [ ] Plan navigation & page flow
-- [ ] Define visual theme (basic colors, font, layout ideas)
+## ✍️ Phase 2: Design
+- [ ] Curate design inspirations from Mobbin for:
+  - Daily Dashboard (to-do list)
+  - Calendar View (miniaturized tasks)
+  - Task Input (voice & text)
+- [ ] Define visual theme: Colors, fonts, and layout elements
 
-## 🧱 Phase 3: Backend Setup
-- [x] Set up GitHub repo  
-- [ ] Create file/project structure  
-- [ ] Initialize FastAPI project (`main.py`)  
-- [ ] Add `.env` and config loader  
-- [ ] Set up SQLAlchemy models:
-  - [ ] User
-  - [ ] Sprint
-  - [ ] Task / Objective
-  - [ ] DailyLog / Tracker
-- [ ] Set up database (Supabase / Railway Postgres)  
-- [ ] Create JWT auth system (signup/login/protected routes)  
+## 🧱 Phase 3: Backend (FastAPI)
+- [ ] Initialize FastAPI project and GitHub repo
+- [ ] Set up environment variables and config loader
+- [ ] Configure PostgreSQL (managed host e.g., Supabase)
+- [ ] Define SQLAlchemy models:
+  - User
+  - Task
+  - Calendar Entry
 - [ ] Build core API routes:
-  - [ ] `POST /sprints`
-  - [ ] `GET /sprints`
-  - [ ] `POST /tasks`
-  - [ ] `PATCH /tasks/{id}` (mark complete)
-  - [ ] `GET /stats`
+  - `POST /tasks` – add tasks
+  - `GET /tasks` – retrieve today's tasks
+  - `PATCH /tasks/{id}` – mark tasks complete
+  - `GET /calendar` – retrieve tasks for calendar view
 
-## 🎨 Phase 4: Frontend (HTMX + TailwindCSS)
-- [ ] Setup base HTML with Tailwind  
-- [ ] Create HTMX views:
-  - [ ] Login / Register
-  - [ ] Sprint dashboard (active tasks)
-  - [ ] Task creation modal
-  - [ ] Completion progress bar
-- [ ] Add Jinja2 template support  
-- [ ] Connect frontend to backend endpoints  
+## 🎨 Phase 4: Mobile Frontend (React Native with Expo)
+- [ ] Set up Expo project and integrate Firebase Auth (Sign Up/Log In)
+- [ ] Develop screens:
+  - Daily Dashboard (task checklist)
+  - Calendar View (minimized tasks)
+  - Task Input (voice via react-native-voice + text field)
+- [ ] Connect screens to FastAPI endpoints
 
-## 💳 Phase 5: Payments & Plans (Post-MVP)
-- [ ] Integrate Stripe
-  - [ ] Create Pro plan
-  - [ ] Add Stripe Checkout
-  - [ ] Handle webhooks (subscription events)
-- [ ] Add middleware to lock premium-only features  
+## 🧪 Phase 5: Testing & Feedback
+- [ ] Create test user accounts; manually run through flows
+- [ ] Get beta tester feedback (2–3 users)
+- [ ] Fix critical UX/UI issues and bugs
 
-## ☁️ Phase 6: Hosting & Deployment
-- [ ] Deploy backend to Railway  
-- [ ] Deploy frontend to Netlify  
-- [ ] Configure domain, env vars, and secrets  
-- [ ] Test full flow live (end-to-end)
-
-## 🧪 Phase 7: Testing & Feedback
-- [ ] Create test user accounts  
-- [ ] Run through all flows manually  
-- [ ] Ask 2–3 friends to test  
-- [ ] Collect feedback (Notion form, Discord, email)  
-- [ ] Fix major UX bugs / blockers  
-
-## 🌀 Phase 8: Post-Launch
-- [ ] Create public landing page  
-- [ ] Add “Join Beta” CTA  
-- [ ] Share with:
-  - [ ] IndieHackers
-  - [ ] Reddit (r/productivity, r/SideProject)
-  - [ ] Twitter/X
-  - [ ] Friends & newsletter
+## ☁️ Phase 6: Deployment & Post-Launch
+- [ ] Deploy backend (e.g., Railway free tier)
+- [ ] Publish mobile app to TestFlight/Play Store Beta
+- [ ] Set up a basic landing page with "Join Beta" CTA
+- [ ] Share on IndieHackers, Reddit, Twitter, etc.
