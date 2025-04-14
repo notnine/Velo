@@ -1,212 +1,120 @@
 # Velo: AI-Powered Smart Scheduling Assistant
 
 ## Project Overview
-
-Velo is an intelligent, mobile-first scheduling application that leverages AI to optimize users' daily task management. The app combines three core components:
-1. Natural language input (voice & text)
-2. Smart task scheduling
-3. Intuitive calendar management
-
-Key differentiators:
-- AI-powered scheduling optimization
-- Hands-free voice interaction
-- Clean, minimal interface
-- Real-time conflict resolution
+Velo is a minimalist task management application that combines simple user interfaces with AI-powered scheduling assistance. The core philosophy is to keep both frontend and backend as simple as possible, with frontend being the simplest and backend housing minimal but necessary logic.
 
 ## Architecture Philosophy
-
-### Frontend Principles
-- **Simplicity First**:
-  - Displaying data
-  - Capturing user input
-  - Basic interactions
-  - Minimal client-side logic
-
-- **Component Guidelines**:
-  - Use basic React Native components over complex UI libraries
-  - Minimal styling and animations
-  - Simple, predictable state management
-  - Clear separation of concerns
-
-- **State Management**:
-  - Minimal client-side state
-  - Simple Redux store for UI state only
-  - No business logic in reducers
-  - Clear action creators
-
-### Backend Principles
-- **Business Logic Centralization**:
-  - All scheduling logic
-  - AI processing
-  - Data validation
-  - Conflict resolution
-  - Task optimization
-
-- **Data Flow**:
-  - Single source of truth
-  - Consistent data validation
-  - Clear error handling
-  - Predictable state updates
+- **Frontend: Ultra Simple**: Just UI components for display and native device inputs
+- **Backend: Simple but Smart**: Houses minimal business logic, delegates complexity to LLM
+- **Clear Separation**: Frontend has zero business logic, backend has minimal logic
 
 ## Technical Stack
+### Frontend
+- React Native with Expo
+- Basic React Native components only
+- Device's built-in text input (includes voice-to-text)
+- Minimal Redux for task state
 
-### Frontend Stack
-- **Framework:** React Native with TypeScript
-- **Navigation:** Expo Router
-- **State Management:** Redux Toolkit (minimal configuration)
-- **UI Components:** Basic React Native components
-- **Voice Integration:** 
-  - react-native-voice for voice input
-  - react-native-tts for text-to-speech
-
-### Backend Stack
-- **API Framework:** Python FastAPI
-- **Database:** PostgreSQL (via Supabase)
-- **AI Integration:** OpenAI API
-- **Deployment:** Heroku
+### Backend
+- FastAPI for API endpoints
+- Supabase for authentication and database
+- OpenAI API for task understanding and scheduling
+- Minimal business logic
 
 ## Core Features
-
-### 1. Task Management
-- **Basic Operations:**
-  - Add tasks
-  - Mark completion
-  - Delete tasks
-  - View task list
-
-- **Task Properties:**
+### Task Management
+- Create, read, update, delete tasks
+- Basic task properties only:
   - Title
-  - Duration
+  - Description (optional)
   - Completion status
+  - Scheduled time (optional)
 
-### 2. Scheduling (Backend-Driven)
-- **Server-Side Logic:**
-  - Time slot allocation
-  - Conflict detection
-  - Schedule optimization
-  - Priority handling
+### Calendar
+- Simple calendar view
+- Display of scheduled tasks
+- Basic scheduling interface
 
-- **Frontend Display:**
-  - Simple calendar view
-  - Task time blocks
-  - Basic conflict indicators
+### Task Input
+- Regular text input using device keyboard
+- Voice input using device's built-in speech-to-text
+- No custom voice recording
 
-### 3. AI Integration (Backend-Only)
-- **Task Analysis:**
-  - Duration estimation
-  - Priority inference
-  - Scheduling suggestions
-
-- **Frontend Display:**
-  - Show suggestions
-  - Accept/reject options
-  - Simple feedback UI
-
-### 4. Voice Interface
-- **Basic Functionality:**
-  - Voice command recording
-  - Text display
-  - Simple feedback
-
-- **Backend Processing:**
-  - Speech-to-text
-  - Command parsing
-  - Response generation
-
-## Data Models
-
-### Tasks
-```sql
-tasks (
-    id UUID PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    duration INTEGER NOT NULL,
-    is_completed BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-)
+## Project Structure
 ```
-
-### Schedules
-```sql
-schedules (
-    id UUID PRIMARY KEY,
-    task_id UUID REFERENCES tasks(id),
-    start_time TIMESTAMP WITH TIME ZONE,
-    end_time TIMESTAMP WITH TIME ZONE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-)
+velo/
+├── frontend/                # React Native frontend
+│   ├── components/         # Reusable components
+│   │   ├── TaskItem.tsx   # Individual task display
+│   │   ├── TaskList.tsx   # List of tasks
+│   │   └── Calendar/      # Calendar display
+│   │       └── CalendarView.tsx
+│   ├── screens/           # Screen components
+│   │   ├── HomeScreen.tsx    # Main task list
+│   │   └── CalendarScreen.tsx # Calendar view
+│   └── store/             # Minimal state management
+│       └── slices/        
+│           └── tasksSlice.ts # Basic task state
+├── backend/               # FastAPI backend
+│   ├── app/              # Application package
+│   │   ├── main.py       # FastAPI application
+│   │   ├── config.py     # Configuration
+│   │   ├── api/          # API routes
+│   │   │   ├── auth.py   # Authentication
+│   │   │   ├── tasks.py  # Task management
+│   │   │   └── ai.py     # LLM integration
+│   │   ├── models.py     # Database models
+│   │   └── schemas.py    # Pydantic schemas
+│   ├── tests/            # Test files
+│   └── requirements.txt   # Python dependencies
+├── docs/                 # Documentation
+│   ├── CONTEXT.md       # Project context
+│   └── DEVELOPMENT_PLAN.md # Development phases
+└── README.md            # Project documentation
 ```
 
 ## Development Approach
+1. **Frontend: Zero Logic**
+   - Pure display components
+   - Use device's built-in inputs
+   - Just show data and collect input
+   - No data processing
+   - No special libraries
 
-### Phase-Based Development
-- Clear separation of concerns
-- Backend-driven features
-- Minimal frontend complexity
-- Incremental feature addition
+2. **Backend: Minimal Logic**
+   - Basic CRUD operations
+   - Simple LLM integration
+   - Minimal data processing
+   - Let LLM handle complexity
 
-### Testing Strategy
-- Comprehensive backend testing
-- Basic frontend integration tests
-- End-to-end testing for critical flows
-
-### Documentation
-- API specifications
-- Data flow diagrams
-- Setup guides
-- Architecture decisions
+## Testing Strategy
+- Frontend: Component rendering tests only
+- Backend: Basic API and integration tests
+- Focus on critical user flows
 
 ## Success Metrics
-- Task completion rates
-- Scheduling accuracy
-- User interaction success
-- System performance
-- Error rates
+1. User Experience
+   - Task management is intuitive
+   - Native inputs work smoothly
+   - Fast response times
 
-## Project Structure (subject to change)
-```
-velo/
-├── app/                    # React Native app root
-│   ├── components/        # Reusable components
-│   │   ├── TaskItem.tsx  # Individual task display
-│   │   ├── TaskList.tsx  # List of tasks
-│   │   ├── Calendar/     # Simple calendar components
-│   │   │   ├── DayView.tsx
-│   │   │   └── TimeBlock.tsx
-│   │   └── Voice/        # Voice interaction components
-│   │       ├── VoiceInput.tsx
-│   │       └── VoiceFeedback.tsx
-│   ├── screens/          # Screen components
-│   │   ├── HomeScreen.tsx    # Main task view
-│   │   ├── CalendarScreen.tsx # Calendar view
-│   │   └── SettingsScreen.tsx # Basic settings
-│   ├── store/            # State management
-│   │   ├── taskSlice.ts  # Task-related state
-│   │   └── store.ts      # Redux store config
-│   ├── services/         # API services
-│   │   ├── api.ts       # API client setup
-│   │   ├── tasks.ts     # Task-related API calls
-│   │   └── voice.ts     # Voice processing
-│   └── utils/           # Helper functions
-│       └── dateTime.ts  # Date/time utilities
-├── backend/             # FastAPI backend
-│   ├── app/            # Application package
-│   │   ├── api/       # API routes
-│   │   │   ├── tasks.py
-│   │   │   └── schedule.py
-│   │   ├── core/      # Core functionality
-│   │   │   ├── scheduler.py  # Scheduling logic
-│   │   │   └── ai_processor.py # AI integration
-│   │   ├── models/    # Database models
-│   │   └── schemas/   # Pydantic schemas
-│   ├── tests/         # Test files
-│   └── requirements.txt # Python dependencies
-├── docs/              # Documentation
-│   ├── CONTEXT.md    # Project context
-│   └── DEVELOPMENT_PLAN.md # Development phases
-└── README.md         # Project documentation
-```
+2. Technical
+   - Clean, minimal codebase
+   - Reliable backend processing
+   - Good test coverage
 
----
+3. Development
+   - Easy to understand
+   - Quick to modify
+   - Simple to maintain
 
-This specification serves as the foundation for Velo's development, emphasizing simplicity in the frontend while maintaining powerful backend capabilities.
+## Security Considerations
+- Basic authentication
+- Protected API endpoints
+- Secure API key handling
+- Input validation
+
+## Documentation
+- Setup guides
+- API documentation
+- Database schema
