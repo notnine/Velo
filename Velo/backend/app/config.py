@@ -1,3 +1,6 @@
+# NOT IN USE - This file is preserved for reference but is not actively used in the MVP
+# Configuration is handled locally in the frontend for the MVP phase
+
 """
 Configuration settings for the Velo API.
 Loads environment variables and provides application settings.
@@ -24,7 +27,7 @@ class Settings(BaseSettings):
     
     # Security
     jwt_secret: str = "your_jwt_secret_here"  # Override this in production
-    jwt_algorithm: str = "HS256"
+    jwt_algorithm: str = "HS256" # Symmetric algo uses a shared secret key. Most common JWT algo.
     access_token_expire_minutes: int = 30
     
     @property

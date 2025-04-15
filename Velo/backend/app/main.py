@@ -1,3 +1,6 @@
+# NOT IN USE - This file is preserved for reference but is not actively used in the MVP
+# The MVP uses local storage instead of a backend database for data persistence
+
 """
 Main application module for the Velo backend API.
 This module initializes the FastAPI application and sets up the API routes.
@@ -8,7 +11,7 @@ from app.api.v1.endpoints import auth, tasks
 
 app = FastAPI(
     title="Velo API",
-    description="Backend API for Velo task management mobile application",
+    description="Backend API for Velo",
     version="1.0.0"
 )
 
