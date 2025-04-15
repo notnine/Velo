@@ -66,21 +66,21 @@ velo/
 │   ├── screens/           # Screen components
 │   │   ├── HomeScreen.tsx    # Main task list
 │   │   └── CalendarScreen.tsx # Calendar view
-│   └── store/             # Minimal state management
-│       └── slices/        
-│           └── tasksSlice.ts # Basic task state
+│   └── store/             # Local state management with persistence
+│       ├── index.ts       # Redux store configuration with AsyncStorage
+│       └── taskSlice.ts   # Task state with local storage integration
 ├── backend/               # FastAPI backend
 │   ├── app/              # Application package
-│   │   ├── main.py       # FastAPI application
-│   │   ├── config.py     # Configuration
-│   │   ├── api/          # API routes
-│   │   │   ├── auth.py   # Authentication
-│   │   │   ├── tasks.py  # Task management
-│   │   │   └── ai.py     # LLM integration
-│   │   ├── models.py     # Database models
-│   │   └── schemas.py    # Pydantic schemas
-│   ├── tests/            # Test files
-│   └── requirements.txt   # Python dependencies
+│   │   ├── main.py       # NOT IN USE - FastAPI application
+│   │   ├── config.py     # NOT IN USE - Configuration
+│   │   ├── api/          # NOT IN USE - API routes
+│   │   │   ├── auth.py   # NOT IN USE - Authentication
+│   │   │   ├── tasks.py  # NOT IN USE - Task management
+│   │   │   └── ai.py     # LLM integration for task optimization
+│   │   ├── models.py     # NOT IN USE - Database models
+│   │   └── schemas.py    # NOT IN USE - Pydantic schemas
+│   ├── tests/            # NOT IN USE - Test files
+│   └── requirements.txt   # Python dependencies for LLM integration
 ├── docs/                 # Documentation
 │   ├── CONTEXT.md       # Project context
 │   └── DEVELOPMENT_PLAN.md # Development phases
