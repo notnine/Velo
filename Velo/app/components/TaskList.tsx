@@ -8,6 +8,7 @@ import { Text } from 'react-native-paper';
 
 export default function TaskList() {
   const tasks = useSelector((state: RootState) => state.tasks.items);
+  const error = useSelector((state: RootState) => state.tasks.error);
   const dispatch = useDispatch();
 
   const handleToggle = (id: string) => {
@@ -17,6 +18,14 @@ export default function TaskList() {
   const handleDelete = (id: string) => {
     dispatch(deleteTask(id));
   };
+
+  if (error) {
+    return (
+      <View style={styles.centerContainer}>
+        <Text variant="bodyLarge" style={styles.errorText}>{error}</Text>
+      </View>
+    );
+  }
 
   if (tasks.length === 0) {
     return (
@@ -49,6 +58,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -57,5 +72,9 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingVertical: 8,
+  },
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
   },
 }); 

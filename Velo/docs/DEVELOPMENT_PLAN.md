@@ -1,10 +1,10 @@
 # Velo MVP Development Plan
 
-This document outlines the development strategy for the Velo MVP, with both frontend and backend kept as simple as possible.
+This document outlines the development strategy for the Velo MVP, focusing on local data storage and minimal complexity.
 
 ## Core Principles
 - Frontend remains simple and focused on display/basic interactions
-- Backend stays minimal, delegating complex logic to LLM
+- Data persistence handled locally for MVP
 - Each phase must be fully tested before moving on
 - Features are added incrementally
 - Focus on core functionality first
@@ -14,96 +14,56 @@ This document outlines the development strategy for the Velo MVP, with both fron
 - [x] Basic Redux store
 - [x] Minimal UI components
 
-## Phase 2: Backend Foundation
-### 2.1 Project Setup
-- [x] FastAPI project structure
-- [x] Development environment setup
-- [x] Basic project configuration
-- [x] Setup development tools (linting, formatting)
+## Phase 2: Local Data Persistence
+### 2.1 Redux Setup
+- [x] Configure Redux store
+- [x] Implement task slice
+- [x] Basic task operations (CRUD)
 
-### 2.2 Authentication & Authorization
-- [ ] Set up Supabase Authentication
-- [ ] Create users table and schema
-- [ ] Implement signup endpoint
-- [ ] Implement signin endpoint
-- [ ] JWT token handling
-- [ ] Authentication tests
-- [ ] Implement account signin/signup with supabase
+### 2.2 AsyncStorage Integration
+- [ ] Set up AsyncStorage with Redux
+- [ ] Implement data persistence layer
+- [ ] Handle loading states
+- [ ] Error handling for storage operations
 
-### 2.3 Database Layer
-- [x] Set up Supabase project
-- [x] Create `tasks` table with minimal fields:
-  - id
-  - user_id
-  - title
-  - description (optional)
-  - is_completed
-  - scheduled_time (optional)
-  - created_at
-- [x] Define database models
-- [x] Basic CRUD operations
-- [x] Write database tests
+### 2.3 User Preferences
+- [ ] Define local preferences schema
+- [ ] Implement preferences storage
+- [ ] Add basic settings UI
 
-### 2.4 Basic API Layer
-- [x] Health check endpoint
-- [ ] CRUD endpoints for tasks
-- [ ] Request/Response models
-- [x] Basic error handling
-- [ ] API tests
+## Phase 3: Calendar Integration
+### 3.1 Calendar View
+- [x] Basic calendar component
+- [ ] Task list integration
+- [ ] Date-based task filtering
 
-### 2.5 Testing & Documentation
-- [ ] Unit tests for endpoints
-- [ ] API documentation
-- [x] Environment setup guide
-- [ ] Deployment documentation
-
-## Phase 3: Frontend-Backend Integration
-### 3.1 API Client Setup
-- [ ] API client configuration
-- [ ] Environment variables
-- [ ] Error handling utilities
-
-### 3.2 Data Flow
-- [ ] Replace Redux operations with API calls
-- [ ] Handle API errors
-- [ ] Add loading states
-
-### 3.3 Calendar View
-- [ ] Simple calendar component
-- [ ] Display scheduled tasks
-- [ ] Allow manual drag-drop scheduling
+### 3.2 Task Scheduling
+- [ ] Add scheduling UI
+- [ ] Implement local task scheduling
+- [ ] Calendar view updates
 
 ## Phase 4: LLM Integration
-### 4.1 OpenAI Setup
-- [ ] API configuration
-- [ ] Basic prompt template
-- [ ] Error handling
+### 4.1 Task Optimization
+- [ ] Create optimization endpoint
+- [ ] Implement task bundling for LLM
+- [ ] Handle LLM suggestions locally
 
-### 4.2 Scheduling Assistant
-- [ ] Single endpoint for rescheduling requests
-- [ ] Simple prompt:
-  - Current tasks and their schedules
-  - User's request
-  - Return suggested changes
-- [ ] Apply suggested changes
-
-### 4.3 Frontend Integration
-- [ ] Add "Ask AI to reschedule" button
-- [ ] Display suggestions
-- [ ] Allow accept/reject of suggestions
+### 4.2 Frontend Integration
+- [ ] Add optimization request UI
+- [ ] Display LLM suggestions
+- [ ] Apply schedule updates locally
 
 ## Testing Strategy
-- Each feature requires unit tests
-- Integration tests for API endpoints
-- End-to-end tests for critical flows
-- LLM response validation
+- Component rendering tests
+- Local storage operations tests
+- Calendar integration tests
+- LLM interaction tests
 
-## Documentation Requirements
-- API documentation
-- Setup guides
-- Database schema
-- Deployment procedures
+## Documentation
+- Setup guide
+- Local storage schema
+- Component documentation
 
 ---
 
-This plan is a living document and will be updated as development progresses and requirements evolve. 
+This plan focuses on the MVP phase with local data storage. Future versions may include backend integration and additional features. 
