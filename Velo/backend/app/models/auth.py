@@ -1,3 +1,10 @@
+# NOT IN USE - This file is preserved for reference but is not actively used in the MVP
+# Authentication models are not needed as we're using local storage only
+
+"""
+Defines Pydantic models that describe structure of user data & authentication-related data.
+"""
+
 from pydantic import BaseModel, EmailStr, Field, ConfigDict, validator
 from typing import Optional
 

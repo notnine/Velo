@@ -1,3 +1,7 @@
+# NOT IN USE - This file is preserved for reference but is not actively used in the MVP
+# Database operations are replaced with local storage in the frontend
+# Only the LLM integration will be used from the backend
+
 """
 Database configuration module.
 Provides Supabase client configuration and connection management.

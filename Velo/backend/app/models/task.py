@@ -1,3 +1,6 @@
+# NOT IN USE - This file is preserved for reference but is not actively used in the MVP
+# Task models are handled directly in the frontend using TypeScript interfaces
+
 """
 Task model module.
 Defines the SQLAlchemy model for tasks in the database.

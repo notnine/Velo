@@ -1,4 +1,12 @@
-"""Authentication and authorization utilities."""
+# NOT IN USE - This file is preserved for reference but is not actively used in the MVP
+# Authentication is not needed in the MVP as we're using local storage only
+# Authentication not needed for local storage
+
+"""
+Implements functions to create & verify JWT tokens.
+Authentication and authorization utilities.
+"""
+
 from typing import Optional
 from fastapi import HTTPException, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
