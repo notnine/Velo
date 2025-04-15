@@ -1,10 +1,12 @@
 import { configureStore } from '@reduxjs/toolkit';
 import taskReducer from './taskSlice';
-import { storageMiddleware, loadStoredTasks } from './middleware/storage';
+import preferencesReducer from './preferencesSlice';
+import { storageMiddleware, loadStoredTasks, loadStoredPreferences } from './middleware/storage';
 
 export const store = configureStore({
   reducer: {
     tasks: taskReducer,
+    preferences: preferencesReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -12,8 +14,9 @@ export const store = configureStore({
     }).concat(storageMiddleware),
 });
 
-// Load stored tasks when the store is created
+// Load stored data when the store is created
 store.dispatch(loadStoredTasks());
+store.dispatch(loadStoredPreferences());
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;

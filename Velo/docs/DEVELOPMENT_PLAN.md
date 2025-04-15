@@ -21,10 +21,10 @@ This document outlines the development strategy for the Velo MVP, focusing on lo
 - [x] Basic task operations (CRUD)
 
 ### 2.2 AsyncStorage Integration
-- [ ] Set up AsyncStorage with Redux
-- [ ] Implement data persistence layer
-- [ ] Handle loading states
-- [ ] Error handling for storage operations
+- [x] Set up AsyncStorage with Redux
+- [x] Implement data persistence layer
+- [x] Handle loading states
+- [x] Error handling for storage operations
 
 ### 2.3 User Preferences
 - [ ] Define local preferences schema
@@ -35,7 +35,7 @@ This document outlines the development strategy for the Velo MVP, focusing on lo
 ### 3.1 Calendar View
 - [x] Basic calendar component
 - [ ] Task list integration
-- [ ] Date-based task filtering
+  - [ ] Show only today's tasks in the task list
 
 ### 3.2 Task Scheduling
 - [ ] Add scheduling UI
@@ -47,10 +47,11 @@ This document outlines the development strategy for the Velo MVP, focusing on lo
 - [ ] Create optimization endpoint
 - [ ] Implement task bundling for LLM
 - [ ] Handle LLM suggestions locally
+- [ ] Implement max number of LLM tokens for user per day
 
 ### 4.2 Frontend Integration
-- [ ] Add optimization request UI
-- [ ] Display LLM suggestions
+- [ ] Add UI text input box for user to talk to LLM
+- [ ] Display LLM suggestions with confirm/reject
 - [ ] Apply schedule updates locally
 
 ## Testing Strategy

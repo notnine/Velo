@@ -24,6 +24,7 @@ export default {
     },
     plugins: [
       'expo-router'
-    ]
+    ],
+    newArchEnabled: true
   }
 }; 
