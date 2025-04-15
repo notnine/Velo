@@ -1,7 +1,21 @@
 # Velo: AI-Powered Smart Scheduling Assistant
 
 ## Project Overview
-Velo is a minimalist task management application that combines simple user interfaces with AI-powered scheduling assistance. The core philosophy is to keep both frontend and backend as simple as possible, with frontend being the simplest and backend housing minimal but necessary logic.
+Velo is a minimalist task management application that seamlessly combines intuitive user interfaces with AI-powered scheduling capabilities. At its core, Velo follows a philosophy of intentional simplicity: a streamlined frontend for effortless user interaction, complemented by a backend that handles essential business logic with minimal complexity.
+
+The application is structured around three main views:
+1. **Home View**: A unified dashboard featuring today's tasks and an at-a-glance calendar widget
+2. **Calendar View**: A comprehensive calendar interface inspired by Apple's calendar design, offering clear task visualization
+3. **Settings View**: A centralized space for user preferences and account management
+
+## MVP Features
+The initial release of Velo focuses on delivering core functionality through these three primary views. In this phase:
+- Task management is handled through a clean, intuitive interface
+- User data (tasks and preferences) is managed locally for rapid development
+- The foundation is laid for future backend integration while maintaining frontend simplicity
+
+## MVP
+Velo's MVP consists of the 3 pages. User data (tasks & preferences) are stored locally. Database houses no data yet.
 
 ## Architecture Philosophy
 - **Frontend: Ultra Simple**: Just UI components for display and native device inputs
