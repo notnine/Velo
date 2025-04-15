@@ -1,3 +1,7 @@
+# NOT IN USE - This file is preserved for reference but is not actively used in the MVP
+# Authentication endpoints are not needed as we're using local storage only
+# This file contains the API routes for user authentication that may be used in future versions
+
 """
 Authentication module for the Velo API.
 Handles user registration, login, and token verification using Supabase.

@@ -1,3 +1,7 @@
+# NOT IN USE - This file is preserved for reference but is not actively used in the MVP
+# Task management endpoints are not needed as we're using local storage only
+# This file contains the API routes for task CRUD operations that may be used in future versions
+
 """
 Tasks endpoints module.
 Handles CRUD operations for tasks with user authentication.

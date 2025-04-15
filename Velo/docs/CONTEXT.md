@@ -71,16 +71,30 @@ velo/
 │       └── taskSlice.ts   # Task state with local storage integration
 ├── backend/               # FastAPI backend
 │   ├── app/              # Application package
+│   │   ├── __init__.py   # Package initialization
 │   │   ├── main.py       # NOT IN USE - FastAPI application
 │   │   ├── config.py     # NOT IN USE - Configuration
-│   │   ├── api/          # NOT IN USE - API routes
-│   │   │   ├── auth.py   # NOT IN USE - Authentication
-│   │   │   ├── tasks.py  # NOT IN USE - Task management
-│   │   │   └── ai.py     # LLM integration for task optimization
-│   │   ├── models.py     # NOT IN USE - Database models
-│   │   └── schemas.py    # NOT IN USE - Pydantic schemas
-│   ├── tests/            # NOT IN USE - Test files
-│   └── requirements.txt   # Python dependencies for LLM integration
+│   │   ├── database.py   # NOT IN USE - Database configuration
+│   │   ├── auth.py       # NOT IN USE - Authentication utilities
+│   │   ├── api/          # API endpoints
+│   │   │   ├── v1/       # Version 1 endpoints
+│   │   │   │   └── endpoints/  # Route handlers
+│   │   │   │       ├── auth.py   # NOT IN USE - Authentication endpoints
+│   │   │   │       ├── tasks.py  # NOT IN USE - Task management endpoints
+│   │   │   │       └── ai.py     # LLM integration for task optimization
+│   │   ├── models/      # Data models
+│   │   │   ├── auth.py  # NOT IN USE - Authentication models
+│   │   │   └── task.py  # NOT IN USE - Task models
+│   │   └── schemas/     # Pydantic schemas
+│   │       └── task.py  # NOT IN USE - Task schemas
+│   ├── migrations/      # NOT IN USE - Database migrations
+│   ├── tests/          # NOT IN USE - Test files
+│   ├── alembic.ini     # NOT IN USE - Alembic configuration
+│   ├── requirements.txt # Python dependencies for LLM integration
+│   ├── .env.example    # Environment variables template
+│   ├── .flake8         # Flake8 configuration
+│   ├── pyproject.toml  # Project configuration
+│   └── .pre-commit-config.yaml # Pre-commit hooks configuration
 ├── docs/                 # Documentation
 │   ├── CONTEXT.md       # Project context
 │   └── DEVELOPMENT_PLAN.md # Development phases
