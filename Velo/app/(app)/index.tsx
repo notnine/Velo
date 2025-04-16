@@ -1,3 +1,7 @@
+/**
+ * Main tasks screen that displays the list of tasks. Allows users to view, add,
+ * toggle, and delete tasks using a floating action button and task list.
+ */
 import React, { useState } from 'react';
 import { View, StyleSheet, FlatList } from 'react-native';
 import { Text, FAB, useTheme } from 'react-native-paper';

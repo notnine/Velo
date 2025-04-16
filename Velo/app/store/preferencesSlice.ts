@@ -1,3 +1,8 @@
+/**
+ * Redux slice for managing user time preferences including productive hours, sleep schedule,
+ * and blocked time ranges. Provides actions for updating individual preferences and bulk updates.
+ * Uses 24-hour format for time consistency.
+ */
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 // Time range interface for various blocked/preferred hours

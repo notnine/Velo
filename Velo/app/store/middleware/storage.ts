@@ -1,3 +1,8 @@
+/**
+ * Storage middleware (keeps store both predicatable & persistent) for Redux that automatically persists tasks and preferences to AsyncStorage.
+ * Provides actions to load stored data and handles saving state changes for specific action types.
+ * Implements error handling and fallback values for failed operations.
+ */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { Task } from '../taskSlice';

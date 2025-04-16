@@ -1,3 +1,8 @@
+/**
+ * Redux slice for managing tasks. Handles task creation, completion toggling, and deletion.
+ * Includes loading states and error handling for async operations.
+ * Generates unique IDs for new tasks and maintains task metadata.
+ */
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { loadStoredTasks } from './middleware/storage';
 

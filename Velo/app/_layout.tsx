@@ -1,3 +1,7 @@
+/**
+ * Root layout component that manages app-wide configuration, authentication state, and navigation.
+ * This is the highest level component that wraps the entire app with necessary providers.
+ */
 import { useEffect, useState } from 'react';
 import { Stack, router, Slot, useRouter, useSegments } from 'expo-router';
 import { Provider as ReduxProvider } from 'react-redux';

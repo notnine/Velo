@@ -1,3 +1,7 @@
+/**
+ * Layout component for the authentication section. Manages the navigation stack
+ * between sign in and registration screens.
+ */
 import { Stack } from 'expo-router';
 
 export default function AuthLayout() {

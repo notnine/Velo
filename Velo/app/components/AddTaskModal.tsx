@@ -1,3 +1,7 @@
+/**
+ * Modal component (dialog that forces user to respond) for adding new tasks. Provides a form with title and optional
+ * description inputs. Handles validation and submission of new task data.
+ */
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Modal, Portal, TextInput, Button, Text } from 'react-native-paper';

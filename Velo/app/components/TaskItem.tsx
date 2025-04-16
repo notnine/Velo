@@ -1,3 +1,7 @@
+/**
+ * Individual task item component that displays a task's title, description, and completion status.
+ * Provides buttons to toggle completion and delete the task. Uses Material Design styling.
+ */
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Card, Text, IconButton, MD3Colors } from 'react-native-paper';

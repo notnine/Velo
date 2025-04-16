@@ -1,3 +1,7 @@
+/**
+ * Layout component for the main app section. Defines the bottom tab navigation
+ * between Tasks, Calendar, and Settings screens.
+ */
 import { Tabs } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 

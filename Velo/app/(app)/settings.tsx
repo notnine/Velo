@@ -1,3 +1,7 @@
+/**
+ * Settings screen where users can configure their preferences and manage their account.
+ * Includes time preferences for task scheduling and account-related actions like sign out.
+ */
 import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, Button, Divider } from 'react-native-paper';

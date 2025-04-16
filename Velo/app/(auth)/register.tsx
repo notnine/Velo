@@ -1,3 +1,7 @@
+/**
+ * Registration screen where new users can create an account by providing their
+ * full name, email, and password. Includes validation and error handling.
+ */
 import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { TextInput, Button, Text } from 'react-native-paper';

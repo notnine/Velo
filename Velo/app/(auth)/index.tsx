@@ -1,3 +1,7 @@
+/**
+ * Sign in screen where users can log into their account using email and password.
+ * Also provides a link to the registration screen for new users.
+ */
 import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { TextInput, Button, Text } from 'react-native-paper';
