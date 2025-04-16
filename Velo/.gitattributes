@@ -1,3 +1,8 @@
+# Enforce consistent line endings and file handling:
+#  - Auto-detect text vs. binary, normalize text to LF on checkout
+#  - Persist CRLF for Windows scripts (.bat, .cmd, .ps1)
+#  - Mark images/PDFs as binary to avoid unwanted conversion
+#  - Explicit rules for source, config, docs, and serialization formats
 # Set default behavior to automatically normalize line endings
 * text=auto eol=lf
 
