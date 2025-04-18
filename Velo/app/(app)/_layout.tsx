@@ -7,13 +7,23 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 export default function AppLayout() {
   return (
-    <Tabs screenOptions={{ headerShown: false }}>
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: {
+          backgroundColor: '#fff',
+          borderTopColor: '#e5e5e5',
+        },
+        tabBarActiveTintColor: '#6750A4',
+        tabBarInactiveTintColor: '#939393',
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Tasks',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="checkbox-marked-outline" size={size} color={color} />
+          title: 'Today',
+          tabBarIcon: ({ color }) => (
+            <MaterialCommunityIcons name="calendar-today" size={24} color={color} />
           ),
         }}
       />
@@ -21,8 +31,8 @@ export default function AppLayout() {
         name="calendar"
         options={{
           title: 'Calendar',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="calendar" size={size} color={color} />
+          tabBarIcon: ({ color }) => (
+            <MaterialCommunityIcons name="calendar-month" size={24} color={color} />
           ),
         }}
       />
@@ -30,8 +40,8 @@ export default function AppLayout() {
         name="settings"
         options={{
           title: 'Settings',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="cog" size={size} color={color} />
+          tabBarIcon: ({ color }) => (
+            <MaterialCommunityIcons name="cog" size={24} color={color} />
           ),
         }}
       />

@@ -27,19 +27,19 @@ This document outlines the development strategy for the Velo MVP, focusing on lo
 - [x] Error handling for storage operations
 
 ### 2.3 User Preferences
-- [ ] Define local preferences schema
-- [ ] Implement preferences storage
-- [ ] Add basic settings UI
+- [x] Define local preferences schema
+- [x] Implement preferences storage
+- [x] Add basic settings UI
 
 ## Phase 3: Calendar Integration
 ### 3.1 Calendar View
 - [x] Basic calendar component
-- [ ] Task list integration
-  - [ ] Show only today's tasks in the task list
+- [x] Task list integration
+  - [x] Show only today's tasks in the task list
 
 ### 3.2 Task Scheduling
-- [ ] Add scheduling UI
-- [ ] Implement local task scheduling
+- [x] Add scheduling UI
+- [x] Implement local task scheduling
 - [ ] Calendar view updates
 
 ## Phase 4: LLM Integration

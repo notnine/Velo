@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Platform, TouchableOpacity } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
-import { Button, Card, Text, List, Portal, Dialog } from 'react-native-paper';
+import { Button, Card, Text, List, Portal, Dialog, HelperText, IconButton } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { RootState } from '../store';
 import {
@@ -26,6 +26,25 @@ const dateToTimeString = (date: Date): string => {
   return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 };
 
+// Helper to compare two time strings (HH:mm format)
+const isStartTimeBeforeEndTime = (start: string, end: string): boolean => {
+  const [startHours, startMinutes] = start.split(':').map(Number);
+  const [endHours, endMinutes] = end.split(':').map(Number);
+  
+  if (startHours < endHours) return true;
+  if (startHours > endHours) return false;
+  return startMinutes < endMinutes;
+};
+
+// Helper to add one hour to a time string (HH:mm format)
+const addOneHour = (time: string): string => {
+  const [hours, minutes] = time.split(':').map(Number);
+  const date = new Date();
+  date.setHours(hours, minutes);
+  date.setHours(date.getHours() + 1);
+  return dateToTimeString(date);
+};
+
 const TimeRangeInput: React.FC<{
   label: string;
   value: TimeRange;
@@ -35,6 +54,16 @@ const TimeRangeInput: React.FC<{
   const [showEndPicker, setShowEndPicker] = useState(false);
   const [tempTime, setTempTime] = useState<Date | null>(null);
   const [tempRange, setTempRange] = useState<TimeRange>(value);
+  const [error, setError] = useState<string>('');
+
+  const validateTimeRange = (range: TimeRange): boolean => {
+    if (!isStartTimeBeforeEndTime(range.start, range.end)) {
+      setError('End time must be after start time');
+      return false;
+    }
+    setError('');
+    return true;
+  };
 
   const handleTimeChange = (isStart: boolean) => (event: any, selectedDate?: Date) => {
     if (Platform.OS === 'android') {
@@ -43,18 +72,45 @@ const TimeRangeInput: React.FC<{
       
       if (selectedDate) {
         const timeString = dateToTimeString(selectedDate);
-        const newRange = {
-          ...value,
-          [isStart ? 'start' : 'end']: timeString,
-        };
+        let newRange: TimeRange;
+        
+        if (isStart) {
+          // When setting start time, automatically set end time to start + 1 hour
+          const newEndTime = addOneHour(timeString);
+          newRange = {
+            start: timeString,
+            end: newEndTime
+          };
+        } else {
+          newRange = {
+            ...value,
+            end: timeString
+          };
+          if (!validateTimeRange(newRange)) {
+            return;
+          }
+        }
         onChange(newRange);
       }
     } else if (selectedDate) {
       const timeString = dateToTimeString(selectedDate);
-      setTempRange({
-        ...tempRange,
-        [isStart ? 'start' : 'end']: timeString,
-      });
+      let newRange: TimeRange;
+      
+      if (isStart) {
+        // When setting start time, automatically set end time to start + 1 hour
+        const newEndTime = addOneHour(timeString);
+        newRange = {
+          start: timeString,
+          end: newEndTime
+        };
+      } else {
+        newRange = {
+          ...tempRange,
+          end: timeString
+        };
+      }
+      setTempRange(newRange);
+      validateTimeRange(newRange);
     }
   };
 
@@ -62,6 +118,7 @@ const TimeRangeInput: React.FC<{
     const currentTime = isStart ? value.start : value.end;
     setTempTime(timeStringToDate(currentTime));
     setTempRange(value);
+    setError('');
     if (isStart) {
       setShowStartPicker(true);
       setShowEndPicker(false);
@@ -72,15 +129,18 @@ const TimeRangeInput: React.FC<{
   };
 
   const handleConfirm = () => {
-    onChange(tempRange);
-    setShowStartPicker(false);
-    setShowEndPicker(false);
+    if (validateTimeRange(tempRange)) {
+      onChange(tempRange);
+      setShowStartPicker(false);
+      setShowEndPicker(false);
+    }
   };
 
   const handleCancel = () => {
     setShowStartPicker(false);
     setShowEndPicker(false);
     setTempRange(value);
+    setError('');
   };
 
   const renderTimePicker = () => {
@@ -115,9 +175,20 @@ const TimeRangeInput: React.FC<{
                 textColor="#000000"
               />
             </View>
+            {error ? (
+              <HelperText type="error" visible={!!error}>
+                {error}
+              </HelperText>
+            ) : null}
             <View style={styles.buttonContainer}>
               <Button onPress={handleCancel}>Cancel</Button>
-              <Button mode="contained" onPress={handleConfirm}>Done</Button>
+              <Button 
+                mode="contained" 
+                onPress={handleConfirm}
+                disabled={!!error}
+              >
+                Done
+              </Button>
             </View>
           </View>
         </Dialog>
@@ -126,8 +197,8 @@ const TimeRangeInput: React.FC<{
   };
 
   return (
-    <Card style={styles.card}>
-      <Card.Title title={label} />
+    <Card style={[styles.card, !label && styles.noLabelCard]}>
+      {label && <Card.Title title={label} />}
       <Card.Content>
         <View style={styles.timeInputContainer}>
           <TouchableOpacity
@@ -156,8 +227,9 @@ export const Settings: React.FC = () => {
   const [showBlockedDialog, setShowBlockedDialog] = useState(false);
   const [editingBlockedHour, setEditingBlockedHour] = useState<{ index: number; range: TimeRange } | null>(null);
   const [newBlockedHour, setNewBlockedHour] = useState<TimeRange>({ start: '09:00', end: '10:00' });
-  const [showStartPicker, setShowStartPicker] = useState(false);
-  const [showEndPicker, setShowEndPicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [isEditingStart, setIsEditingStart] = useState(true);
+  const [tempTime, setTempTime] = useState<Date | null>(null);
 
   const handleProductiveHoursChange = (range: TimeRange) => {
     dispatch(setProductiveHours(range));
@@ -167,43 +239,51 @@ export const Settings: React.FC = () => {
     dispatch(setSleepHours(range));
   };
 
-  const handleAddBlockedHours = () => {
-    dispatch(addBlockedHours(newBlockedHour));
-    setNewBlockedHour({ start: '09:00', end: '10:00' });
-    setShowBlockedDialog(false);
-  };
-
-  const handleUpdateBlockedHours = () => {
-    if (editingBlockedHour) {
-      dispatch(updateBlockedHours(editingBlockedHour));
-      setEditingBlockedHour(null);
-      setShowBlockedDialog(false);
-    }
-  };
-
-  const handleBlockedTimeChange = (isStart: boolean) => (event: any, selectedDate?: Date) => {
+  const handleTimePickerChange = (event: any, selectedDate?: Date) => {
     if (Platform.OS === 'android') {
-      setShowStartPicker(false);
-      setShowEndPicker(false);
+      setShowTimePicker(false);
     }
 
-    if (selectedDate) {
+    if (selectedDate && editingBlockedHour) {
       const timeString = dateToTimeString(selectedDate);
-      if (editingBlockedHour) {
-        setEditingBlockedHour({
-          ...editingBlockedHour,
-          range: {
-            ...editingBlockedHour.range,
-            [isStart ? 'start' : 'end']: timeString,
-          },
-        });
+      let newRange: TimeRange;
+
+      if (isEditingStart) {
+        // When setting start time, automatically set end time to start + 1 hour
+        const newEndTime = addOneHour(timeString);
+        newRange = {
+          start: timeString,
+          end: newEndTime
+        };
       } else {
-        setNewBlockedHour({
-          ...newBlockedHour,
-          [isStart ? 'start' : 'end']: timeString,
-        });
+        newRange = {
+          ...editingBlockedHour.range,
+          end: timeString
+        };
+        // Validate end time is after start time
+        if (!isStartTimeBeforeEndTime(newRange.start, newRange.end)) {
+          return;
+        }
+      }
+
+      dispatch(updateBlockedHours({ index: editingBlockedHour.index, range: newRange }));
+      
+      if (Platform.OS === 'android') {
+        setEditingBlockedHour(null);
       }
     }
+  };
+
+  const showBlockedTimePicker = (index: number, range: TimeRange, isStart: boolean) => {
+    setEditingBlockedHour({ index, range });
+    setIsEditingStart(isStart);
+    setTempTime(timeStringToDate(isStart ? range.start : range.end));
+    setShowTimePicker(true);
+  };
+
+  const handleTimePickerDismiss = () => {
+    setShowTimePicker(false);
+    setEditingBlockedHour(null);
   };
 
   return (
@@ -223,92 +303,101 @@ export const Settings: React.FC = () => {
       <Card style={styles.card}>
         <Card.Title title="Blocked Hours" />
         <Card.Content>
-          <List.Section>
-            {preferences.blockedHours.map((range, index) => (
-              <List.Item
-                key={index}
-                title={`${range.start} - ${range.end}`}
-                right={(props) => (
-                  <View style={styles.blockedHourActions}>
-                    <Button
-                      {...props}
-                      onPress={() => {
-                        setEditingBlockedHour({ index, range });
-                        setShowBlockedDialog(true);
-                      }}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      {...props}
-                      onPress={() => dispatch(removeBlockedHours(index))}
-                    >
-                      Delete
-                    </Button>
-                  </View>
-                )}
-              />
-            ))}
-          </List.Section>
+          {preferences.blockedHours.map((range, index) => (
+            <View key={index} style={styles.blockedHourContainer}>
+              <View style={styles.timeInputContainer}>
+                <View style={styles.timeRangeContainer}>
+                  <TouchableOpacity
+                    style={styles.timeButton}
+                    onPress={() => showBlockedTimePicker(index, range, true)}
+                  >
+                    <Text variant="bodyLarge">{range.start}</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.timeInputSeparator}>to</Text>
+                  <TouchableOpacity
+                    style={styles.timeButton}
+                    onPress={() => showBlockedTimePicker(index, range, false)}
+                  >
+                    <Text variant="bodyLarge">{range.end}</Text>
+                  </TouchableOpacity>
+                </View>
+                <IconButton
+                  icon="delete"
+                  size={20}
+                  onPress={() => dispatch(removeBlockedHours(index))}
+                />
+              </View>
+            </View>
+          ))}
           <Button
             mode="contained"
             onPress={() => {
               setEditingBlockedHour(null);
+              setNewBlockedHour({ start: '09:00', end: '10:00' });
               setShowBlockedDialog(true);
             }}
+            style={styles.addButton}
           >
             Add Blocked Hours
           </Button>
         </Card.Content>
       </Card>
 
+      {/* Time picker for editing blocked hours */}
+      {showTimePicker && Platform.OS === 'ios' && (
+        <Portal>
+          <Dialog visible style={styles.dialog}>
+            <View style={styles.pickerContainer}>
+              <View style={styles.pickerWrapper}>
+                <DateTimePicker
+                  value={tempTime || new Date()}
+                  mode="time"
+                  is24Hour={true}
+                  display="spinner"
+                  onChange={handleTimePickerChange}
+                  minuteInterval={15}
+                  style={styles.picker}
+                  textColor="#000000"
+                />
+              </View>
+              <View style={styles.buttonContainer}>
+                <Button onPress={handleTimePickerDismiss}>Cancel</Button>
+                <Button mode="contained" onPress={() => {
+                  handleTimePickerDismiss();
+                }}>
+                  Done
+                </Button>
+              </View>
+            </View>
+          </Dialog>
+        </Portal>
+      )}
+
+      {showTimePicker && Platform.OS === 'android' && (
+        <DateTimePicker
+          value={tempTime || new Date()}
+          mode="time"
+          is24Hour={true}
+          display="default"
+          onChange={handleTimePickerChange}
+          minuteInterval={15}
+        />
+      )}
+
+      {/* Dialog for adding new blocked hours */}
       <Portal>
         <Dialog visible={showBlockedDialog} onDismiss={() => setShowBlockedDialog(false)}>
-          <Dialog.Title>
-            {editingBlockedHour ? 'Edit Blocked Hours' : 'Add Blocked Hours'}
-          </Dialog.Title>
+          <Dialog.Title>Add Blocked Hours</Dialog.Title>
           <Dialog.Content>
-            <View style={styles.timeInputContainer}>
-              <TouchableOpacity
-                style={styles.timeButton}
-                onPress={() => setShowStartPicker(true)}
-              >
-                <Text variant="bodyLarge">
-                  {editingBlockedHour?.range.start ?? newBlockedHour.start}
-                </Text>
-              </TouchableOpacity>
-              <Text style={styles.timeInputSeparator}>to</Text>
-              <TouchableOpacity
-                style={styles.timeButton}
-                onPress={() => setShowEndPicker(true)}
-              >
-                <Text variant="bodyLarge">
-                  {editingBlockedHour?.range.end ?? newBlockedHour.end}
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {(showStartPicker || showEndPicker) && (
-              <DateTimePicker
-                value={timeStringToDate(
-                  showStartPicker
-                    ? editingBlockedHour?.range.start ?? newBlockedHour.start
-                    : editingBlockedHour?.range.end ?? newBlockedHour.end
-                )}
-                mode="time"
-                is24Hour={true}
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                onChange={handleBlockedTimeChange(showStartPicker)}
-                minuteInterval={15}
-              />
-            )}
+            <TimeRangeInput
+              label=""
+              value={newBlockedHour}
+              onChange={(range) => {
+                dispatch(addBlockedHours(range));
+                setShowBlockedDialog(false);
+              }}
+            />
           </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={() => setShowBlockedDialog(false)}>Cancel</Button>
-            <Button onPress={editingBlockedHour ? handleUpdateBlockedHours : handleAddBlockedHours}>
-              {editingBlockedHour ? 'Update' : 'Add'}
-            </Button>
-          </Dialog.Actions>
         </Dialog>
       </Portal>
     </ScrollView>
@@ -325,9 +414,15 @@ const styles = StyleSheet.create({
   timeInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     gap: 16,
     marginVertical: 8,
+  },
+  timeRangeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: 16,
   },
   timeButton: {
     padding: 12,
@@ -339,9 +434,11 @@ const styles = StyleSheet.create({
   timeInputSeparator: {
     marginHorizontal: 8,
   },
-  blockedHourActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  blockedHourContainer: {
+    marginBottom: 8,
+  },
+  addButton: {
+    marginTop: 8,
   },
   dialog: {
     backgroundColor: 'transparent',
@@ -369,6 +466,9 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: 8,
     width: '100%',
+  },
+  noLabelCard: {
+    marginBottom: 0,
   },
 });
 

@@ -21,6 +21,9 @@ export interface Task {
   description: string;
   completed: boolean;
   createdAt: string;
+  scheduledDate: string | null; // ISO string format
+  startTime: string | null; // Format: "1:00PM"
+  endTime: string | null; // Format: "2:00PM"
 }
 
 interface TaskState {
@@ -39,15 +42,52 @@ export const taskSlice = createSlice({
   name: 'tasks',
   initialState,
   reducers: {
-    addTask: (state, action: PayloadAction<{ title: string; description: string }>) => {
+    addTask: (state, action: PayloadAction<{ 
+      title: string; 
+      description: string;
+      startDate: Date;
+      endDate: Date;
+    }>) => {
+      const { startDate, endDate } = action.payload;
       const newTask: Task = {
         id: generateUUID(),
         title: action.payload.title,
         description: action.payload.description,
         completed: false,
         createdAt: new Date().toISOString(),
+        scheduledDate: startDate.toISOString().split('T')[0],
+        startTime: startDate.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        }).replace(/\s+/g, ''),
+        endTime: endDate.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        }).replace(/\s+/g, '')
       };
       state.items.push(newTask);
+    },
+    updateTaskSchedule: (state, action: PayloadAction<{ 
+      id: string; 
+      scheduledDate: string | null;
+    }>) => {
+      const task = state.items.find(item => item.id === action.payload.id);
+      if (task) {
+        task.scheduledDate = action.payload.scheduledDate;
+      }
+    },
+    updateTaskTime: (state, action: PayloadAction<{
+      id: string;
+      startTime: string | null;
+      endTime: string | null;
+    }>) => {
+      const task = state.items.find(item => item.id === action.payload.id);
+      if (task) {
+        task.startTime = action.payload.startTime;
+        task.endTime = action.payload.endTime;
+      }
     },
     toggleTask: (state, action: PayloadAction<string>) => {
       const task = state.items.find(item => item.id === action.payload);
@@ -57,6 +97,31 @@ export const taskSlice = createSlice({
     },
     deleteTask: (state, action: PayloadAction<string>) => {
       state.items = state.items.filter(item => item.id !== action.payload);
+    },
+    updateTask: (state, action: PayloadAction<{
+      id: string;
+      title: string;
+      description: string;
+      startDate: Date;
+      endDate: Date;
+    }>) => {
+      const { id, title, description, startDate, endDate } = action.payload;
+      const task = state.items.find(item => item.id === id);
+      if (task) {
+        task.title = title;
+        task.description = description;
+        task.scheduledDate = startDate.toISOString().split('T')[0];
+        task.startTime = startDate.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        }).replace(/\s+/g, '');
+        task.endTime = endDate.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        }).replace(/\s+/g, '');
+      }
     },
   },
   extraReducers: (builder) => {
@@ -77,5 +142,5 @@ export const taskSlice = createSlice({
   },
 });
 
-export const { addTask, toggleTask, deleteTask } = taskSlice.actions;
+export const { addTask, updateTaskSchedule, updateTaskTime, toggleTask, deleteTask, updateTask } = taskSlice.actions;
 export default taskSlice.reducer; 
