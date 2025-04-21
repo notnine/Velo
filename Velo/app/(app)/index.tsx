@@ -103,11 +103,7 @@ export default function TasksScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text variant="headlineMedium">My Tasks</Text>
-      </View>
-
-      <View style={styles.dateHeader}>
-        <Text variant="titleLarge">{formatDate(new Date())}</Text>
+        <Text variant="headlineMedium">Today's Tasks</Text>
         <Text variant="bodyMedium" style={styles.taskCount}>
           {todaysTasks.length} task{todaysTasks.length !== 1 ? 's' : ''}
         </Text>
@@ -161,10 +157,6 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
-  },
-  dateHeader: {
-    padding: 16,
-    backgroundColor: '#f5f5f5',
   },
   taskCount: {
     color: '#666',

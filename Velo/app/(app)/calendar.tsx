@@ -14,8 +14,10 @@ import { Text, IconButton, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
-import { Task, addTask } from '../store/taskSlice';
+import { Task, addTask, deleteTask } from '../store/taskSlice';
 import AddTaskModal from '../components/AddTaskModal';
+import TaskDetailsModal from '../components/TaskDetailsModal';
+import DayDetailView from '../components/DayDetailView';
 
 const DAYS_OF_WEEK = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const MONTHS = [
@@ -75,13 +77,16 @@ const getMonthData = (year: number, month: number, tasks: Task[]): MonthData => 
   return { year, month, days };
 };
 
-const TaskSnippet = ({ task }: { task: Task }) => {
+const TaskSnippet = ({ task, onPress }: { task: Task; onPress: () => void }) => {
   const theme = useTheme();
   return (
-    <View style={[
-      styles.taskSnippet,
-      { backgroundColor: task.completed ? theme.colors.surfaceVariant : theme.colors.primary }
-    ]}>
+    <TouchableOpacity
+      onPress={onPress}
+      style={[
+        styles.taskSnippet,
+        { backgroundColor: task.completed ? theme.colors.surfaceVariant : theme.colors.primary }
+      ]}
+    >
       <Text 
         numberOfLines={1} 
         style={[
@@ -92,7 +97,7 @@ const TaskSnippet = ({ task }: { task: Task }) => {
       >
         {task.title}
       </Text>
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -100,6 +105,10 @@ export default function CalendarScreen() {
   const tasks = useSelector((state: RootState) => state.tasks.items);
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [isDayDetailVisible, setIsDayDetailVisible] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const theme = useTheme();
   const dispatch = useDispatch();
@@ -138,6 +147,37 @@ export default function CalendarScreen() {
       endDate,
     }));
     setIsAddModalVisible(false);
+  };
+
+  const handleTaskPress = (task: Task) => {
+    setSelectedTask(task);
+    setIsEditModalVisible(true);
+  };
+
+  const handleEditTask = () => {
+    if (selectedTask) {
+      setIsEditModalVisible(false);
+      setIsAddModalVisible(true);
+    }
+  };
+
+  const handleDeleteTask = () => {
+    if (selectedTask) {
+      dispatch(deleteTask(selectedTask.id));
+      setIsEditModalVisible(false);
+      setSelectedTask(null);
+    }
+  };
+
+  const handleDayPress = (date: Date, monthData: MonthData) => {
+    setSelectedDate(date);
+    setIsDayDetailVisible(true);
+  };
+
+  const getTasksForDate = (date: Date) => {
+    if (!date) return [];
+    const dateStr = date.toISOString().split('T')[0];
+    return tasks.filter(task => task.scheduledDate === dateStr);
   };
 
   return (
@@ -182,12 +222,16 @@ export default function CalendarScreen() {
               {Array.from({ length: 6 }).map((_, weekIndex) => (
                 <View key={weekIndex} style={styles.week}>
                   {monthData.days.slice(weekIndex * 7, (weekIndex + 1) * 7).map((day, dayIndex) => (
-                    <View
+                    <TouchableOpacity
                       key={dayIndex}
                       style={[
                         styles.dayCell,
                         isToday(day.date, monthData) && styles.todayCell
                       ]}
+                      onPress={() => {
+                        const date = new Date(monthData.year, monthData.month, day.date);
+                        handleDayPress(date, monthData);
+                      }}
                     >
                       <Text style={[
                         styles.dayNumber,
@@ -198,13 +242,17 @@ export default function CalendarScreen() {
                       </Text>
                       <View style={styles.tasksList}>
                         {day.tasks.slice(0, 3).map((task, taskIndex) => (
-                          <TaskSnippet key={taskIndex} task={task} />
+                          <TaskSnippet 
+                            key={taskIndex} 
+                            task={task} 
+                            onPress={() => handleTaskPress(task)}
+                          />
                         ))}
                         {day.tasks.length > 3 && (
                           <Text style={styles.moreTasksText}>+{day.tasks.length - 3}</Text>
                         )}
                       </View>
-                    </View>
+                    </TouchableOpacity>
                   ))}
                 </View>
               ))}
@@ -217,7 +265,38 @@ export default function CalendarScreen() {
         visible={isAddModalVisible}
         onDismiss={() => setIsAddModalVisible(false)}
         onSubmit={handleSubmit}
+        editTask={selectedTask || undefined}
       />
+
+      {selectedTask && (
+        <TaskDetailsModal
+          visible={isEditModalVisible}
+          onDismiss={() => {
+            setIsEditModalVisible(false);
+            setSelectedTask(null);
+          }}
+          onEdit={handleEditTask}
+          onDelete={handleDeleteTask}
+          task={selectedTask}
+        />
+      )}
+
+      {selectedDate && (
+        <DayDetailView
+          visible={isDayDetailVisible}
+          onDismiss={() => {
+            setIsDayDetailVisible(false);
+            setSelectedDate(null);
+          }}
+          onTaskPress={(task) => {
+            setIsDayDetailVisible(false);
+            handleTaskPress(task);
+          }}
+          date={selectedDate}
+          tasks={getTasksForDate(selectedDate)}
+          month={MONTHS[selectedDate.getMonth()]}
+        />
+      )}
     </SafeAreaView>
   );
 }
