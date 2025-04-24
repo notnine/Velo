@@ -190,11 +190,11 @@ export default function CalendarScreen() {
         </TouchableOpacity>
         <View style={styles.headerRight}>
           <IconButton
-            icon="microphone"
+            icon="chat-processing"
             size={24}
             iconColor="#FF3B30"
             onPress={() => {
-              // TODO: Implement LLM interaction
+              // TODO: Implement LLM interaction modal with both text and voice input
               console.log('LLM interaction to be implemented');
             }}
             style={styles.micButton}

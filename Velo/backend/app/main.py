@@ -1,13 +1,11 @@
-# NOT IN USE - This file is preserved for reference but is not actively used in the MVP
-# The MVP uses local storage instead of a backend database for data persistence
-
 """
 Main application module for the Velo backend API.
 This module initializes the FastAPI application and sets up the API routes.
 """
 
 from fastapi import FastAPI
-from app.api.v1.endpoints import auth, tasks
+from fastapi.middleware.cors import CORSMiddleware
+from app.api import llm
 
 app = FastAPI(
     title="Velo API",
@@ -15,9 +13,17 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # TODO: Configure this properly for production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Include routers
-app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
-app.include_router(tasks.router, prefix="/api/v1/tasks", tags=["tasks"])
+app.include_router(llm.router, prefix="/api/llm", tags=["llm"])
 
 @app.get("/health")
 async def health_check():
