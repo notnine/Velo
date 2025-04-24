@@ -4,7 +4,7 @@
  */
 import React, { useState, useMemo } from 'react';
 import { View, StyleSheet, FlatList } from 'react-native';
-import { Text, FAB, useTheme, Divider } from 'react-native-paper';
+import { Text, useTheme, IconButton } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
@@ -103,10 +103,31 @@ export default function TasksScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text variant="headlineMedium">Today's Tasks</Text>
-        <Text variant="bodyMedium" style={styles.taskCount}>
-          {todaysTasks.length} task{todaysTasks.length !== 1 ? 's' : ''}
-        </Text>
+        <View style={styles.headerLeft}>
+          <Text variant="headlineMedium">Today's Tasks</Text>
+          <Text variant="bodyMedium" style={styles.taskCount}>
+            {todaysTasks.length} task{todaysTasks.length !== 1 ? 's' : ''}
+          </Text>
+        </View>
+        <View style={styles.headerRight}>
+          <IconButton
+            icon="microphone"
+            size={24}
+            iconColor="#FF3B30"
+            onPress={() => {
+              // TODO: Implement LLM interaction
+              console.log('LLM interaction to be implemented');
+            }}
+            style={styles.micButton}
+          />
+          <IconButton
+            icon="plus"
+            onPress={() => {
+              setEditingTask(undefined);
+              setIsModalVisible(true);
+            }}
+          />
+        </View>
       </View>
 
       <FlatList
@@ -120,22 +141,12 @@ export default function TasksScreen() {
             onEdit={() => handleEditTask(item)}
           />
         )}
-        ItemSeparatorComponent={() => <Divider />}
         ListEmptyComponent={() => (
           <View style={styles.emptyState}>
             <Text variant="bodyLarge">No tasks for today</Text>
             <Text variant="bodyMedium">Add a task by tapping the + button</Text>
           </View>
         )}
-      />
-
-      <FAB
-        icon="plus"
-        style={[styles.fab, { backgroundColor: theme.colors.primary }]}
-        onPress={() => {
-          setEditingTask(undefined);
-          setIsModalVisible(true);
-        }}
       />
 
       <AddTaskModal
@@ -157,6 +168,21 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  headerLeft: {
+    flex: 1,
+    paddingTop: 4,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 4,
+  },
+  micButton: {
+    marginRight: -8,
   },
   taskCount: {
     color: '#666',
@@ -167,11 +193,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-  },
-  fab: {
-    position: 'absolute',
-    margin: 16,
-    right: 0,
-    bottom: 0,
   },
 }); 

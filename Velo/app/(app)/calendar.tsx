@@ -188,10 +188,22 @@ export default function CalendarScreen() {
             {currentYear}
           </Text>
         </TouchableOpacity>
-        <IconButton 
-          icon="plus" 
-          onPress={() => setIsAddModalVisible(true)}
-        />
+        <View style={styles.headerRight}>
+          <IconButton
+            icon="microphone"
+            size={24}
+            iconColor="#FF3B30"
+            onPress={() => {
+              // TODO: Implement LLM interaction
+              console.log('LLM interaction to be implemented');
+            }}
+            style={styles.micButton}
+          />
+          <IconButton
+            icon="plus" 
+            onPress={() => setIsAddModalVisible(true)}
+          />
+        </View>
       </View>
 
       <View style={styles.weekDayHeader}>
@@ -278,6 +290,7 @@ export default function CalendarScreen() {
           onEdit={handleEditTask}
           onDelete={handleDeleteTask}
           task={selectedTask}
+          month={MONTHS[new Date(selectedTask.scheduledDate || '').getMonth()]}
         />
       )}
 
@@ -307,15 +320,28 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   header: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    alignItems: 'flex-start',
   },
   yearButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingTop: 4,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 4,
+  },
+  micButton: {
+    marginRight: -8,
+  },
+  title: {
+    flex: 1,
   },
   weekDayHeader: {
     flexDirection: 'row',

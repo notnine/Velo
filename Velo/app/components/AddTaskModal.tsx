@@ -167,15 +167,31 @@ export default function AddTaskModal({ visible, onDismiss, onSubmit, editTask }:
           onChangeText={setTitle}
           style={styles.input}
           returnKeyType="done"
+          mode="outlined"
+          dense
+          autoComplete="off"
+          textContentType="none"
+          blurOnSubmit
+          enablesReturnKeyAutomatically
+          clearButtonMode="while-editing"
+          maxLength={100}
         />
 
         <TextInput
           label="Description (optional)"
           value={description}
           onChangeText={setDescription}
-          multiline={false}
           style={styles.input}
           returnKeyType="done"
+          mode="outlined"
+          dense
+          autoComplete="off"
+          textContentType="none"
+          blurOnSubmit
+          enablesReturnKeyAutomatically
+          clearButtonMode="while-editing"
+          maxLength={500}
+          multiline={false}
           onSubmitEditing={handleDescriptionSubmit}
         />
 
@@ -304,6 +320,7 @@ const styles = StyleSheet.create({
   },
   input: {
     marginBottom: 16,
+    backgroundColor: 'transparent',
   },
   dateTimeContainer: {
     marginBottom: 16,

@@ -16,71 +16,65 @@ interface TaskItemProps {
 
 export default function TaskItem({ task, onToggle, onDelete, onEdit }: TaskItemProps) {
   return (
-    <Card style={styles.card}>
+    <Card style={styles.card} mode="elevated">
       <TouchableOpacity onPress={onEdit}>
         <Card.Content style={styles.content}>
-          <View style={styles.taskInfo}>
+          <View style={styles.leftSection}>
             <IconButton
-              icon={task.completed ? 'checkbox-marked' : 'checkbox-blank-outline'}
+              icon={task.completed ? 'checkbox-marked-circle' : 'checkbox-blank-circle-outline'}
               onPress={(e) => {
                 e.stopPropagation();
                 onToggle();
               }}
               size={24}
-              iconColor={task.completed ? MD3Colors.primary40 : MD3Colors.neutral40}
+              iconColor={task.completed ? '#007AFF' : '#C7C7CC'}
             />
-            <View style={styles.textContainer}>
-              <View style={styles.titleRow}>
-                <Text
-                  variant="titleMedium"
-                  style={[
-                    styles.title,
-                    task.completed && styles.completedText,
-                  ]}
-                >
-                  {task.title}
-                </Text>
-                {task.startTime && task.endTime && (
-                  <View style={styles.timeContainer}>
-                    <IconButton
-                      icon="clock-outline"
-                      size={16}
-                      style={styles.clockIcon}
-                    />
-                    <Text
-                      variant="bodySmall"
-                      style={[
-                        styles.timeText,
-                        task.completed && styles.completedText,
-                      ]}
-                    >
-                      {task.startTime} - {task.endTime}
-                    </Text>
-                  </View>
-                )}
-              </View>
-              {task.description ? (
-                <Text
-                  variant="bodyMedium"
-                  style={[
-                    styles.description,
-                    task.completed && styles.completedText,
-                  ]}
-                >
-                  {task.description}
-                </Text>
-              ) : null}
-            </View>
           </View>
-          <IconButton
-            icon="delete-outline"
-            onPress={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            size={20}
-            iconColor={MD3Colors.error50}
-          />
+          
+          <View style={styles.middleSection}>
+            <Text
+              style={[
+                styles.title,
+                task.completed && styles.completedText,
+              ]}
+            >
+              {task.title}
+            </Text>
+            
+            {task.startTime && task.endTime && (
+              <Text
+                style={[
+                  styles.time,
+                  task.completed && styles.completedText,
+                ]}
+              >
+                {task.startTime} - {task.endTime}
+              </Text>
+            )}
+            
+            {task.description && (
+              <Text
+                style={[
+                  styles.description,
+                  task.completed && styles.completedText,
+                ]}
+              >
+                {task.description}
+              </Text>
+            )}
+          </View>
+
+          <View style={styles.rightSection}>
+            <IconButton
+              icon="trash-can-outline"
+              onPress={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              size={20}
+              iconColor="#FF3B30"
+            />
+          </View>
         </Card.Content>
       </TouchableOpacity>
     </Card>
@@ -90,47 +84,45 @@ export default function TaskItem({ task, onToggle, onDelete, onEdit }: TaskItemP
 const styles = StyleSheet.create({
   card: {
     marginHorizontal: 16,
-    marginVertical: 8,
+    marginVertical: 6,
+    backgroundColor: 'white',
+    elevation: 2,
+    borderRadius: 12,
   },
   content: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-  },
-  taskInfo: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    flex: 1,
-  },
-  textContainer: {
-    flex: 1,
-  },
-  titleRow: {
-    flexDirection: 'row',
     alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 4,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    minHeight: 80,
+  },
+  leftSection: {
+    marginRight: 8,
+  },
+  middleSection: {
+    flex: 1,
+    justifyContent: 'center',
+    gap: 6,
+    minHeight: 60,
+  },
+  rightSection: {
+    marginLeft: 8,
   },
   title: {
-    flex: 1,
+    fontSize: 17,
+    color: '#000000',
+    fontWeight: '400',
   },
-  timeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  clockIcon: {
-    margin: 0,
-    padding: 0,
-  },
-  timeText: {
-    color: MD3Colors.primary40,
+  time: {
+    fontSize: 15,
+    color: '#8E8E93',
   },
   description: {
-    color: MD3Colors.neutral60,
+    fontSize: 15,
+    color: '#8E8E93',
   },
   completedText: {
     textDecorationLine: 'line-through',
-    color: MD3Colors.neutral40,
+    color: '#C7C7CC',
   },
 }); 

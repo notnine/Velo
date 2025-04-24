@@ -40,14 +40,14 @@ This document outlines the development strategy for the Velo MVP, focusing on lo
 ### 3.2 Task Scheduling
 - [x] Add scheduling UI
 - [x] Implement local task scheduling
-- [ ] Calendar view updates
+- [x] Calendar view updates
 
 ## Phase 4: LLM Integration
-### 4.1 Task Optimization
-- [ ] Create optimization endpoint
-- [ ] Implement task bundling for LLM
-- [ ] Handle LLM suggestions locally
-- [ ] Implement max number of LLM tokens for user per day
+### 4.1 Backend Setup (Minimal FastAPI)
+- [ ] Set up single FastAPI endpoint for LLM interactions
+- [ ] Implement simple in-memory token tracking
+- [ ] Add basic rate limiting for API calls
+- [ ] Set up environment variables for API keys
 
 ### 4.2 Frontend Integration
 - [ ] Add UI text input box for user to talk to LLM

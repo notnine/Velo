@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
-import { Text, Portal, Modal } from 'react-native-paper';
+import { Text, Portal, Modal, IconButton } from 'react-native-paper';
 import { Task } from '../store/taskSlice';
 
 interface DayDetailViewProps {
@@ -57,6 +57,12 @@ export default function DayDetailView({
         <View style={styles.container}>
           <View style={styles.header}>
             <TouchableOpacity onPress={onDismiss} style={styles.backButton}>
+              <IconButton
+                icon="chevron-left"
+                size={24}
+                iconColor="#FF3B30"
+                style={styles.backIcon}
+              />
               <Text style={styles.monthText}>{month}</Text>
             </TouchableOpacity>
             <Text style={styles.headerDate}>{formatHeaderDate()}</Text>
@@ -134,11 +140,18 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
   },
   backButton: {
-    width: 80,
+    width: 100,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backIcon: {
+    margin: 0,
+    marginLeft: -8,
   },
   monthText: {
     fontSize: 17,
     color: '#FF3B30',
+    marginLeft: -8,
   },
   headerDate: {
     fontSize: 17,

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { Text, Portal, Modal, Button } from 'react-native-paper';
+import { Text, Portal, Modal, IconButton } from 'react-native-paper';
 import { Task } from '../store/taskSlice';
 
 interface TaskDetailsModalProps {
@@ -9,6 +9,7 @@ interface TaskDetailsModalProps {
   onEdit: () => void;
   onDelete: () => void;
   task: Task;
+  month: string;
 }
 
 export default function TaskDetailsModal({ 
@@ -16,7 +17,8 @@ export default function TaskDetailsModal({
   onDismiss, 
   onEdit, 
   onDelete,
-  task 
+  task,
+  month
 }: TaskDetailsModalProps) {
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return '';
@@ -42,12 +44,18 @@ export default function TaskDetailsModal({
         contentContainerStyle={styles.container}
       >
         <View style={styles.header}>
-          <TouchableOpacity onPress={onDismiss}>
-            <Text style={styles.backButton}>Back</Text>
+          <TouchableOpacity onPress={onDismiss} style={styles.backButton}>
+            <IconButton
+              icon="chevron-left"
+              size={24}
+              iconColor="#FF3B30"
+              style={styles.backIcon}
+            />
+            <Text style={styles.monthText}>{month}</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Event Details</Text>
-          <TouchableOpacity onPress={onEdit}>
-            <Text style={styles.editButton}>Edit</Text>
+          <TouchableOpacity onPress={onEdit} style={styles.editButton}>
+            <Text style={styles.editButtonText}>Edit</Text>
           </TouchableOpacity>
         </View>
 
@@ -93,28 +101,42 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
     paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e5e5',
+    borderBottomColor: '#E5E5EA',
+    backgroundColor: 'white',
+  },
+  backButton: {
+    width: 100,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backIcon: {
+    margin: 0,
+    marginLeft: -8,
+  },
+  monthText: {
+    fontSize: 17,
+    color: '#FF3B30',
+    marginLeft: -8,
   },
   headerTitle: {
     fontSize: 17,
-    fontWeight: '600',
-  },
-  backButton: {
-    fontSize: 17,
-    color: '#007AFF',
-    minWidth: 44,
+    fontWeight: '400',
+    color: '#000',
+    flex: 1,
+    textAlign: 'center',
   },
   editButton: {
+    width: 80,
+    alignItems: 'flex-end',
+  },
+  editButtonText: {
     fontSize: 17,
     color: '#FF3B30',
-    minWidth: 44,
-    textAlign: 'right',
   },
   content: {
     padding: 16,
