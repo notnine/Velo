@@ -44,10 +44,10 @@ This document outlines the development strategy for the Velo MVP, focusing on lo
 
 ## Phase 4: LLM Integration
 ### 4.1 Backend Setup (Minimal FastAPI)
-- [ ] Set up single FastAPI endpoint for LLM interactions
-- [ ] Implement simple in-memory token tracking
-- [ ] Add basic rate limiting for API calls
-- [ ] Set up environment variables for API keys
+- [x] Set up single FastAPI endpoint for LLM interactions
+- [x] Implement simple in-memory token tracking
+- [x] Add basic rate limiting for API calls
+- [x] Set up environment variables for API keys
 
 ### 4.2 Frontend Integration
 - [ ] Add UI text input box for user to talk to LLM
