@@ -11,7 +11,7 @@ import os
 import pathlib
 
 # Load environment variables at startup
-# Get the path to the root Velo directory (two levels up from this file)
+# Get the path to the root Velo directory
 root_dir = pathlib.Path(__file__).parents[2]
 env_path = root_dir / '.env'
 load_dotenv(dotenv_path=env_path)

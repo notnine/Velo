@@ -10,6 +10,7 @@ Key Features:
 - Structured response format for consistent task handling
 - Context-aware task suggestions
 - OpenAI GPT integration for natural language understanding
+- Rate limiting and token tracking
 
 Example Usage:
     POST /chat
@@ -38,8 +39,7 @@ Dependencies:
     - FastAPI for API routing
     - Pydantic for request/response validation
 """
-
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel
 from typing import Optional, List, Dict
 from openai import OpenAI, OpenAIError, AuthenticationError, RateLimitError
@@ -48,6 +48,9 @@ from functools import lru_cache
 import json
 from dotenv import load_dotenv
 import pathlib
+from collections import defaultdict
+import time
+from datetime import datetime, timedelta
 
 # Load environment variables from .env file in root directory
 root_dir = pathlib.Path(__file__).parents[3]  # Go up 3 levels: api -> app -> backend -> root
@@ -55,6 +58,16 @@ env_path = root_dir / '.env'
 load_dotenv(dotenv_path=env_path)
 
 router = APIRouter()
+
+# Rate limiting configuration
+RATE_LIMIT_WINDOW = 3600  # 1 hour in seconds
+MAX_REQUESTS_PER_HOUR = 100
+MAX_TOKENS_PER_HOUR = 100000
+
+# In-memory storage for rate limiting and token tracking
+request_counts = defaultdict(int)
+token_usage = defaultdict(int)
+last_reset = defaultdict(lambda: datetime.now())
 
 # OpenAI Configuration
 class OpenAIConfig:
@@ -71,6 +84,31 @@ class OpenAIConfig:
 def get_openai_config() -> OpenAIConfig:
     return OpenAIConfig()
 
+def check_and_reset_counters(client_id: str):
+    """Check if rate limit window has passed and reset counters if needed."""
+    now = datetime.now()
+    if now - last_reset[client_id] > timedelta(seconds=RATE_LIMIT_WINDOW):
+        request_counts[client_id] = 0
+        token_usage[client_id] = 0
+        last_reset[client_id] = now
+
+def check_rate_limit(client_id: str, estimated_tokens: int = 0) -> bool:
+    """Check if a client has exceeded their rate limits."""
+    check_and_reset_counters(client_id)
+    
+    if request_counts[client_id] >= MAX_REQUESTS_PER_HOUR:
+        return False
+    
+    if token_usage[client_id] + estimated_tokens >= MAX_TOKENS_PER_HOUR:
+        return False
+    
+    return True
+
+def update_usage(client_id: str, tokens_used: int):
+    """Update usage counters for a client."""
+    request_counts[client_id] += 1
+    token_usage[client_id] += tokens_used
+
 class TaskSuggestion(BaseModel):
     """Model for structured task suggestions from LLM."""
     action: str  # create_task, update_task, delete_task, etc.
@@ -86,6 +124,12 @@ class LLMResponse(BaseModel):
     response: str
     suggested_actions: Optional[List[TaskSuggestion]] = None
     error: Optional[str] = None
+
+class UsageStats(BaseModel):
+    """Model for usage statistics."""
+    requests_remaining: int
+    tokens_remaining: int
+    time_until_reset: int  # seconds
 
 def create_chat_prompt(message: str, context: Optional[dict] = None) -> List[Dict]:
     """Create a structured prompt for the LLM."""
@@ -147,12 +191,37 @@ async def test_openai_connection(config: OpenAIConfig = Depends(get_openai_confi
             detail=f"Error testing OpenAI connection: {str(e)}"
         )
 
+@router.get("/usage", response_model=UsageStats)
+async def get_usage_stats(request: Request) -> UsageStats:
+    """Get current usage statistics for the client."""
+    client_id = request.client.host
+    check_and_reset_counters(client_id)
+    
+    now = datetime.now()
+    time_until_reset = int((last_reset[client_id] + timedelta(seconds=RATE_LIMIT_WINDOW) - now).total_seconds())
+    
+    return UsageStats(
+        requests_remaining=max(0, MAX_REQUESTS_PER_HOUR - request_counts[client_id]),
+        tokens_remaining=max(0, MAX_TOKENS_PER_HOUR - token_usage[client_id]),
+        time_until_reset=max(0, time_until_reset)
+    )
+
 @router.post("/chat", response_model=LLMResponse)
 async def chat_with_llm(
     request: LLMRequest,
+    request_obj: Request,
     config: OpenAIConfig = Depends(get_openai_config)
 ) -> LLMResponse:
     """Process a chat message and return the LLM's response."""
+    client_id = request_obj.client.host
+    
+    # Check rate limits
+    if not check_rate_limit(client_id, estimated_tokens=len(request.message.split()) * 2):
+        raise HTTPException(
+            status_code=429,
+            detail="Rate limit exceeded. Please try again later."
+        )
+    
     try:
         messages = create_chat_prompt(request.message, request.context)
         
@@ -165,6 +234,10 @@ async def chat_with_llm(
         
         # Extract the assistant's message
         assistant_message = response.choices[0].message.content
+        
+        # Update usage statistics with actual token usage from OpenAI
+        tokens_used = response.usage.total_tokens
+        update_usage(client_id, tokens_used)
         
         # Parse suggestions from the response
         suggested_actions = []
