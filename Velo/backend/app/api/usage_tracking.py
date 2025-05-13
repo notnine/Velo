@@ -1,79 +1,130 @@
 """
-Usage tracking module for OpenAI API calls.
-Implements in-memory tracking for rate limiting and token usage.
+Usage Tracking Module
+
+This module handles rate limiting and token usage tracking for the LLM API.
+Uses Redis for persistent storage of usage data with the following structure:
+
+Keys:
+- {client_id}:requests - Number of requests in current window
+- {client_id}:tokens - Total tokens used
+- {client_id}:window_start - Start timestamp of current window
 """
 from datetime import datetime, timedelta
-from typing import Dict, Any
-from fastapi import APIRouter, Request, HTTPException
-
-router = APIRouter()
+import json
+from typing import Tuple
+from ..core.redis_client import get_redis_client
 
 # Rate limiting configuration
 RATE_LIMIT_WINDOW = 3600  # 1 hour in seconds
-MAX_REQUESTS_PER_HOUR = 100
-MAX_TOKENS_PER_HOUR = 100000
+MAX_REQUESTS_PER_WINDOW = 100  # Maximum requests per hour
+MAX_TOKENS_PER_WINDOW = 100000  # Maximum tokens per hour
 
-# In-memory storage
-request_counts: Dict[str, int] = {}
-token_usage: Dict[str, int] = {}
-last_reset: Dict[str, datetime] = {}
-
-def check_and_reset_counters(client_id: str) -> bool:
+def _get_usage_data(client_id: str) -> Tuple[int, int, float]:
     """
-    Check if rate limit window has passed and reset counters if needed.
-    Returns True if counters were reset.
-    """
-    now = datetime.now()
-    if client_id not in last_reset:
-        last_reset[client_id] = now
-        request_counts[client_id] = 0
-        token_usage[client_id] = 0
-        return True
+    Get current usage data for a client from Redis.
+    
+    Args:
+        client_id: Unique identifier for the client
         
-    if now - last_reset[client_id] > timedelta(seconds=RATE_LIMIT_WINDOW):
-        request_counts[client_id] = 0
-        token_usage[client_id] = 0
-        last_reset[client_id] = now
-        return True
-    return False
-
-@router.get("/usage")
-async def get_usage_stats(request: Request) -> Dict[str, Any]:
-    """Get current usage statistics for a client."""
-    client_id = request.client.host
-    check_and_reset_counters(client_id)
+    Returns:
+        Tuple[int, int, float]: (request_count, token_count, window_start)
+    """
+    redis_client = get_redis_client()
+    pipe = redis_client.pipeline()
     
-    if client_id not in request_counts:
-        return {
-            "request_count": 0,
-            "token_usage": 0,
-            "last_reset": datetime.now()
-        }
+    # Get all relevant keys in a single pipeline
+    pipe.get(f"{client_id}:requests")
+    pipe.get(f"{client_id}:tokens")
+    pipe.get(f"{client_id}:window_start")
     
-    return {
-        "request_count": request_counts[client_id],
-        "token_usage": token_usage[client_id],
-        "last_reset": last_reset[client_id]
-    }
-
-def update_usage(client_id: str, tokens_used: int):
-    """Update usage statistics for a client."""
-    if client_id not in request_counts:
-        request_counts[client_id] = 0
-        token_usage[client_id] = 0
-        last_reset[client_id] = datetime.now()
+    results = pipe.execute()
     
-    request_counts[client_id] += 1
-    token_usage[client_id] += tokens_used
+    request_count = int(results[0]) if results[0] else 0
+    token_count = int(results[1]) if results[1] else 0
+    window_start = float(results[2]) if results[2] else datetime.now().timestamp()
+    
+    return request_count, token_count, window_start
 
 def check_rate_limit(client_id: str, estimated_tokens: int = 0) -> bool:
-    """Check if a client has exceeded their rate limits."""
-    check_and_reset_counters(client_id)
+    """
+    Check if the client has exceeded their rate limit.
     
-    if request_counts.get(client_id, 0) >= MAX_REQUESTS_PER_HOUR:
+    Args:
+        client_id: Unique identifier for the client
+        estimated_tokens: Estimated number of tokens for the request
+        
+    Returns:
+        bool: True if within limits, False if exceeded
+    """
+    redis_client = get_redis_client()
+    now = datetime.now().timestamp()
+    
+    request_count, token_count, window_start = _get_usage_data(client_id)
+    
+    # Check if we need to reset the window
+    if now - window_start > RATE_LIMIT_WINDOW:
+        pipe = redis_client.pipeline()
+        pipe.set(f"{client_id}:requests", 1)
+        pipe.set(f"{client_id}:tokens", estimated_tokens)
+        pipe.set(f"{client_id}:window_start", now)
+        pipe.execute()
+        return True
+    
+    # Check if adding this request would exceed limits
+    if (request_count + 1 > MAX_REQUESTS_PER_WINDOW or 
+        token_count + estimated_tokens > MAX_TOKENS_PER_WINDOW):
         return False
     
-    if token_usage.get(client_id, 0) + estimated_tokens >= MAX_TOKENS_PER_HOUR:
-        return False
+    # Update counters
+    pipe = redis_client.pipeline()
+    pipe.incr(f"{client_id}:requests")
+    pipe.incrby(f"{client_id}:tokens", estimated_tokens)
+    pipe.execute()
     
-    return True 
+    return True
+
+def update_usage(client_id: str, tokens_used: int) -> None:
+    """
+    Update the actual token usage for a request.
+    
+    Args:
+        client_id: Unique identifier for the client
+        tokens_used: Actual number of tokens used
+    """
+    redis_client = get_redis_client()
+    
+    # Get current token count and update it directly
+    # No need to calculate differences since we're setting the absolute value
+    redis_client.set(f"{client_id}:tokens", tokens_used)
+
+def get_usage_stats(client_id: str) -> dict:
+    """
+    Get current usage statistics for a client.
+    
+    Args:
+        client_id: Unique identifier for the client
+        
+    Returns:
+        dict: Usage statistics including requests, tokens, and time remaining
+    """
+    request_count, token_count, window_start = _get_usage_data(client_id)
+    now = datetime.now().timestamp()
+    
+    time_remaining = max(0, RATE_LIMIT_WINDOW - (now - window_start))
+    
+    return {
+        "requests": {
+            "used": request_count,
+            "limit": MAX_REQUESTS_PER_WINDOW,
+            "remaining": MAX_REQUESTS_PER_WINDOW - request_count
+        },
+        "tokens": {
+            "used": token_count,
+            "limit": MAX_TOKENS_PER_WINDOW,
+            "remaining": MAX_TOKENS_PER_WINDOW - token_count
+        },
+        "window": {
+            "start": datetime.fromtimestamp(window_start).isoformat(),
+            "time_remaining_seconds": time_remaining
+        }
+    } 
