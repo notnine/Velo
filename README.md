@@ -5,8 +5,8 @@ A task management app that helps you organize and schedule your tasks efficientl
 ## Setup
 
 1. Clone the repository
-2. Set up environment variables:
-   - Create a `.env` file in the root directory
+2. Setup environment variables:
+   - Create a `.env` file in the `backend` directory
    - Add your Supabase and OpenAI credentials:
    ```bash
    # Frontend (Supabase)
@@ -29,13 +29,10 @@ A task management app that helps you organize and schedule your tasks efficientl
    cd backend
    pip install -r requirements.txt
    ```
-
-## Development
-
-To start the development server:
-```bash
-npx expo start
-```
+5. Start the development server:
+   ```bash
+   npx expo start
+   ```
 
 ## Environment Variables
 
@@ -46,16 +43,24 @@ The following environment variables are required:
 
 Get these credentials from your Supabase project dashboard.
 
-# Expo Router Example
+## Project Structure
 
-Use [`expo-router`](https://docs.expo.dev/router/introduction/) to build native navigation using files in the `app/` directory.
+This is a React Native app using Expo Router for navigation:
 
-## 🚀 How to use
+- `app/` - Contains all screen components organized by routes
+- `components/` - Reusable UI components
+- `backend/` - FastAPI backend for LLM integration
+- `docs/` - Project documentation
 
-```sh
-npx create-expo-app -e with-router
-```
+## Features
 
-## 📝 Notes
+- Task management with local storage
+- Calendar view for scheduled tasks
+- AI-powered chat interface (in development)
+- User preferences and settings
 
-- [Expo Router: Docs](https://docs.expo.dev/router/introduction/)
+## Development Notes
+
+- Uses Expo Router for file-based navigation
+- Redux for state management with AsyncStorage persistence
+- Component-based architecture for reusability

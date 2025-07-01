@@ -15,9 +15,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
 import { Task, addTask, deleteTask } from '../store/taskSlice';
-import AddTaskModal from '../components/AddTaskModal';
-import TaskDetailsModal from '../components/TaskDetailsModal';
-import DayDetailView from '../components/DayDetailView';
+import AddTaskModal from '../../components/AddTaskModal';
+import TaskDetailsModal from '../../components/TaskDetailsModal';
+import DayDetailView from '../../components/DayDetailView';
 
 const DAYS_OF_WEEK = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const MONTHS = [

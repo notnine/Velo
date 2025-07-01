@@ -9,8 +9,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
 import { Task, addTask, toggleTask, deleteTask, updateTask } from '../store/taskSlice';
-import TaskItem from '../components/TaskItem';
-import AddTaskModal from '../components/AddTaskModal';
+import TaskItem from '../../components/TaskItem';
+import AddTaskModal from '../../components/AddTaskModal';
 
 const isSameDay = (date1: string, date2: string) => {
   const d1 = new Date(date1);

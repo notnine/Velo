@@ -50,9 +50,9 @@ This document outlines the development strategy for the Velo MVP, focusing on lo
 - [x] Set up environment variables for API keys
 
 ### 4.2 Frontend Integration
-- [ ] Add UI text input box for user to talk to LLM
-- [ ] Display LLM suggestions with confirm/reject
-- [ ] Apply schedule updates locally
+- [x] Add UI text input box for user to talk to LLM
+- [ ] Display LLM suggestions with confirm/reject (in progress)
+- [ ] Apply schedule updates locally (in progress)
 
 ## Testing Strategy
 - Component rendering tests

@@ -2,17 +2,19 @@
  * Root layout component that manages app-wide configuration, authentication state, and navigation.
  * This is the highest level component that wraps the entire app with necessary providers.
  */
+import 'react-native-url-polyfill/auto';
 import { useEffect, useState } from 'react';
 import { Stack, router, Slot, useRouter, useSegments } from 'expo-router';
 import { Provider as ReduxProvider } from 'react-redux';
 import { PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { store } from './store';
-import { supabase } from './lib/supabase';
+import { supabase } from '../lib/supabase';
 import { Session } from '@supabase/supabase-js';
 
 export default function RootLayout() {
   const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const segments = useSegments();
   const router = useRouter();
 
@@ -21,6 +23,7 @@ export default function RootLayout() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       console.log('Initial session check:', session ? 'Logged in' : 'No session');
       setSession(session);
+      setIsLoading(false);
     });
 
     // Listen for auth changes
@@ -33,6 +36,8 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
+    if (isLoading) return; // Don't navigate while loading
+    
     const inAuthGroup = segments[0] === '(auth)';
     console.log('Current route:', segments.join('/'));
     console.log('In auth group:', inAuthGroup);
@@ -45,7 +50,7 @@ export default function RootLayout() {
       console.log('Redirecting to home');
       router.replace('/(app)/');
     }
-  }, [session, segments]);
+  }, [session, segments, isLoading]);
 
   return (
     <ReduxProvider store={store}>

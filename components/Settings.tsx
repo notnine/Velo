@@ -3,7 +3,7 @@ import { View, StyleSheet, ScrollView, Platform, TouchableOpacity } from 'react-
 import { useDispatch, useSelector } from 'react-redux';
 import { Button, Card, Text, List, Portal, Dialog, HelperText, IconButton } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { RootState } from '../store';
+import { RootState } from '../app/store';
 import {
   TimeRange,
   setProductiveHours,
@@ -11,7 +11,7 @@ import {
   addBlockedHours,
   removeBlockedHours,
   updateBlockedHours,
-} from '../store/preferencesSlice';
+} from '../app/store/preferencesSlice';
 
 // Helper to convert HH:mm to Date
 const timeStringToDate = (timeString: string): Date => {

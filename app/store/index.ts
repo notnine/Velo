@@ -6,12 +6,14 @@
 import { configureStore } from '@reduxjs/toolkit';
 import taskReducer from './taskSlice';
 import preferencesReducer from './preferencesSlice';
+import llmReducer from './llmSlice';
 import { storageMiddleware, loadStoredTasks, loadStoredPreferences } from './middleware/storage';
 
 export const store = configureStore({
   reducer: {
     tasks: taskReducer,
     preferences: preferencesReducer,
+    llm: llmReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

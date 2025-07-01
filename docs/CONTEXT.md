@@ -56,49 +56,46 @@ Velo's MVP consists of the 3 pages. User data (tasks & preferences) are stored l
 
 ## Project Structure
 ```
-velo/
-├── frontend/                # React Native frontend
-│   ├── components/         # Reusable components
-│   │   ├── TaskItem.tsx   # Individual task display
-│   │   ├── TaskList.tsx   # List of tasks
-│   │   └── Calendar/      # Calendar display
-│   │       └── CalendarView.tsx
-│   ├── screens/           # Screen components
-│   │   ├── HomeScreen.tsx    # Main task list
-│   │   └── CalendarScreen.tsx # Calendar view
-│   └── store/             # Local state management with persistence
-│       ├── index.ts       # Redux store configuration with AsyncStorage
-│       └── taskSlice.ts   # Task state with local storage integration
-├── backend/               # FastAPI backend
-│   ├── app/              # Application package
-│   │   ├── __init__.py   # Package initialization
-│   │   ├── main.py       # NOT IN USE - FastAPI application
-│   │   ├── config.py     # NOT IN USE - Configuration
-│   │   ├── database.py   # NOT IN USE - Database configuration
-│   │   ├── auth.py       # NOT IN USE - Authentication utilities
-│   │   ├── api/          # API endpoints
-│   │   │   ├── v1/       # Version 1 endpoints
-│   │   │   │   └── endpoints/  # Route handlers
-│   │   │   │       ├── auth.py   # NOT IN USE - Authentication endpoints
-│   │   │   │       ├── tasks.py  # NOT IN USE - Task management endpoints
-│   │   │   │       └── ai.py     # LLM integration for task optimization
-│   │   ├── models/      # Data models
-│   │   │   ├── auth.py  # NOT IN USE - Authentication models
-│   │   │   └── task.py  # NOT IN USE - Task models
-│   │   └── schemas/     # Pydantic schemas
-│   │       └── task.py  # NOT IN USE - Task schemas
-│   ├── migrations/      # NOT IN USE - Database migrations
-│   ├── tests/          # NOT IN USE - Test files
-│   ├── alembic.ini     # NOT IN USE - Alembic configuration
-│   ├── requirements.txt # Python dependencies for LLM integration
-│   ├── .env.example    # Environment variables template
-│   ├── .flake8         # Flake8 configuration
-│   ├── pyproject.toml  # Project configuration
-│   └── .pre-commit-config.yaml # Pre-commit hooks configuration
-├── docs/                 # Documentation
-│   ├── CONTEXT.md       # Project context
-│   └── DEVELOPMENT_PLAN.md # Development phases
-└── README.md            # Project documentation
+app/                # React Native frontend
+├── (app)/           # App screens
+│   ├── _layout.tsx   # App layout
+│   ├── calendar.tsx  # Calendar
+│   ├── index.tsx     # Home
+│   └── settings.tsx  # Settings
+├── (auth)/          # Authentication screens
+│   ├── _layout.tsx  # Auth layout
+│   ├── index.tsx    # Login
+│   └── register.tsx # Register
+├── store/           # App state management
+│   ├── index.ts     # Redux store configuration
+│   ├── taskSlice.ts # Task state
+│   ├── llmSlice.ts  # LLM state
+│   └── middleware/  # Redux middleware
+└── components/      # UI components
+    ├── AddTaskModal.tsx  # Add task modal
+    ├── ChatInterface.tsx # Chat interface
+    ├── DayDetailView.tsx # Day details
+    ├── Settings.tsx      # Settings
+    ├── TaskDetailsModal.tsx # Task details
+    ├── TaskItem.tsx     # Task item
+    └── TaskList.tsx     # Task list
+
+backend/            # FastAPI backend
+├── app/             # Application package
+│   ├── __init__.py  # Init
+│   ├── api/         # API
+│   ├── config.py    # Configuration
+│   ├── auth.py      # Authentication
+│   ├── core/        # Core modules
+│   └── migrations/  # Migrations
+├── tests/           # Backend tests
+└── requirements.txt # Backend dependencies
+
+docs/              # Documentation
+├── CONTEXT.md     # Context
+└── DEVELOPMENT_PLAN.md # Dev plan
+
+README.md          # Main documentation
 ```
 
 ## Development Approach

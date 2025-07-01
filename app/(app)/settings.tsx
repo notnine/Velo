@@ -6,9 +6,9 @@ import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, Button, Divider } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../../lib/supabase';
 import { router } from 'expo-router';
-import { Settings as TimePreferences } from '../components/Settings';
+import { Settings as TimePreferences } from '../../components/Settings';
 
 export default function SettingsScreen() {
   const handleSignOut = async () => {
