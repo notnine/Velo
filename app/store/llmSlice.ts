@@ -52,28 +52,20 @@ export const sendMessage = createAsyncThunk(
   'llm/sendMessage',
   async ({ message, context }: SendMessagePayload, { rejectWithValue }) => {
     try {
-      // For now, return a mock response since we don't have LLM integration yet
-      // This can be replaced with actual API call when LLM service is available
-      console.log('Sending message to LLM:', message, context);
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const mockResponse: LLMResponse = {
-        response: `I understand you said: "${message}". Based on your current tasks, I can help you organize and manage them better. This is a placeholder response until the LLM service is integrated.`,
-        suggested_actions: [
-          {
-            action: 'create_task',
-            parameters: {
-              title: 'Example suggested task',
-              description: 'This is an example of what the LLM might suggest',
-              due_date: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
-            }
-          }
-        ]
-      };
-      
-      return mockResponse;
+      // Call FastAPI backend
+      const response = await fetch('http://10.88.111.53:8000/api/llm/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message, context }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        return rejectWithValue(errorData.error || 'Failed to get response from assistant');
+      }
+      const data = await response.json();
+      return data;
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'Failed to send message');
     }

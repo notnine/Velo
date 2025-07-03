@@ -51,8 +51,8 @@ This document outlines the development strategy for the Velo MVP, focusing on lo
 
 ### 4.2 Frontend Integration
 - [x] Add UI text input box for user to talk to LLM
-- [ ] Use existing red text bubble icon (top-right, calendar screen) to open assistant
-- [ ] Show Bottom Sheet Assistant on icon tap (half-height, expands fullscreen)
+- [x] Use existing red text bubble icon (top-right, calendar screen) to open assistant
+- [x] Show Bottom Sheet Assistant on icon tap (half-height, expands fullscreen)
 - [ ] Display chat messages and text input in assistant
 - [ ] Add minimal mic/voice input (basic voice-to-text)
 - [ ] Display LLM suggestions with confirm/reject (in progress)
