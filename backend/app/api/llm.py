@@ -94,26 +94,35 @@ class LLMResponse(BaseModel):
 def create_chat_prompt(message: str, context: Optional[dict] = None) -> List[Dict]:
     """Create a structured prompt for the LLM."""
     system_prompt = """You are Velo's AI assistant, helping users manage their tasks and schedule.
-    Your role is to understand task-related requests and provide clear, actionable responses.
-    When suggesting actions, use the following format:
-    
-    SUGGESTION: [
-        {
-            "action": "create_task",
-            "parameters": {
-                "title": "Task title",
-                "description": "Task description",
-                "due_date": "2024-03-20T14:00:00"
-            }
+Your role is to understand task-related requests and provide clear, actionable responses.
+When suggesting actions, use the following format:
+
+SUGGESTION: [
+    {
+        "action": "create_task",
+        "parameters": {
+            "title": "Task title",
+            "description": "Task description",
+            "start_date": "2024-03-20T14:00:00",
+            "end_date": "2024-03-20T15:00:00"
         }
-    ]
-    
-    Available actions:
-    - create_task: Create a new task
-    - update_task: Update an existing task
-    - delete_task: Delete a task
-    - reschedule_task: Reschedule an existing task
-    """
+    },
+    ...
+]
+
+Guidelines:
+- For every scheduled task, always provide both start_date and end_date in ISO 8601 format.
+- If the user requests splitting work over multiple days, return multiple create_task actions, each with its own start_date and end_date.
+- Do not use or mention 'due_date'.
+- Only include fields that are relevant for the user's request.
+- Always include title and description if possible.
+
+Available actions:
+- create_task: Create a new task
+- update_task: Update an existing task
+- delete_task: Delete a task
+- reschedule_task: Reschedule an existing task
+"""
     
     messages = [
         {"role": "system", "content": system_prompt},

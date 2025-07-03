@@ -1,9 +1,10 @@
-import React from 'react';
-import { View, TextInput, TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { View, TextInput, TouchableOpacity, Text, StyleSheet, ActivityIndicator, ScrollView, Platform } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../app/store';
 import { Task } from '../app/store/taskSlice';
 import { sendMessage } from '../app/store/llmSlice';
+import { addTask } from '../app/store/taskSlice';
 
 interface ChatInterfaceProps {
     onClose: () => void;
@@ -31,6 +32,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onClose }) => {
     const dispatch = useDispatch<AppDispatch>();
     const tasks = useSelector((state: RootState) => state.tasks.items);
     const { isLoading, lastResponse: response, error, messages } = useSelector((state: RootState) => state.llm);
+    const scrollViewRef = useRef<ScrollView>(null);
+
+    useEffect(() => {
+        if (scrollViewRef.current) {
+            scrollViewRef.current.scrollToEnd({ animated: true });
+        }
+    }, [messages, isLoading]);
 
     const handleSend = async () => {
         if (!message.trim()) return;
@@ -50,8 +58,21 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onClose }) => {
     };
 
     const handleAcceptSuggestion = (suggestion: LLMSuggestion) => {
-        // TODO: Implement suggestion handling in Phase 4.2
-        console.log('Accepting suggestion:', suggestion);
+        const { title, description = '', due_date } = suggestion.parameters;
+        let startDate = due_date ? new Date(due_date) : new Date();
+        let endDate = due_date ? new Date(new Date(due_date).getTime() + 60 * 60 * 1000) : new Date(Date.now() + 60 * 60 * 1000);
+        startDate = new Date(startDate);
+        endDate = new Date(endDate);
+        const taskPayload = {
+            title: title || 'Untitled Task',
+            description,
+            startDate,
+            endDate
+        };
+        console.log('Accepting suggestion:', suggestion, 'Task payload:', taskPayload);
+        dispatch(addTask(taskPayload));
+        // Hide suggestions after accept
+        setRejectedIndexes(Array.from({ length: 100 }, (_, i) => i));
     };
 
     const handleRejectSuggestion = (index: number) => {
@@ -59,7 +80,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onClose }) => {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={{ flex: 1 }}>
             <View style={styles.header}>
                 <Text style={styles.title}>Chat with Velo</Text>
                 <TouchableOpacity onPress={onClose}>
@@ -67,64 +88,63 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onClose }) => {
                 </TouchableOpacity>
             </View>
 
-            <View style={styles.responseContainer}>
-                {error && (
-                    <Text style={styles.errorText}>{error}</Text>
-                )}
-                <View style={{ flex: 1 }}>
-                    {messages.map((msg, idx) => (
-                        <View key={msg.id} style={{
-                            flexDirection: 'row',
-                            justifyContent: msg.response ? 'flex-start' : 'flex-end',
-                            marginBottom: 8,
+            <ScrollView
+                ref={scrollViewRef}
+                style={{ flex: 1 }}
+                contentContainerStyle={{ padding: 8, paddingBottom: 16 }}
+                keyboardShouldPersistTaps="handled"
+            >
+                {messages.map((msg, idx) => (
+                    <View key={msg.id} style={{
+                        flexDirection: 'row',
+                        justifyContent: msg.response ? 'flex-start' : 'flex-end',
+                        marginBottom: 8,
+                    }}>
+                        <View style={{
+                            backgroundColor: msg.response ? '#f0f0f0' : '#2196F3',
+                            borderRadius: 12,
+                            padding: 10,
+                            maxWidth: '80%',
                         }}>
-                            <View style={{
-                                backgroundColor: msg.response ? '#f0f0f0' : '#2196F3',
-                                borderRadius: 12,
-                                padding: 10,
-                                maxWidth: '80%',
-                            }}>
-                                <Text style={{ color: msg.response ? '#000' : '#fff' }}>
-                                    {msg.response ? msg.response.response : msg.message}
-                                </Text>
-                                {/* Show suggestions only for the latest assistant message */}
-                                {msg.response && idx === messages.length - 1 && msg.response.suggested_actions && msg.response.suggested_actions.length > 0 && (
-                                    msg.response.suggested_actions.map((suggestion, index) => (
-                                        rejectedIndexes.includes(index) ? null : (
-                                            <View key={index} style={styles.suggestionContainer}>
-                                                <Text style={styles.suggestionText}>
-                                                    {suggestion.action}: {suggestion.parameters.title}
-                                                </Text>
-                                                <View style={{ flexDirection: 'row' }}>
-                                                    <TouchableOpacity 
-                                                        style={styles.acceptButton}
-                                                        onPress={() => handleAcceptSuggestion(suggestion)}
-                                                    >
-                                                        <Text style={styles.acceptButtonText}>Accept</Text>
-                                                    </TouchableOpacity>
-                                                    <TouchableOpacity
-                                                        style={styles.rejectButton}
-                                                        onPress={() => handleRejectSuggestion(index)}
-                                                    >
-                                                        <Text style={styles.rejectButtonText}>Reject</Text>
-                                                    </TouchableOpacity>
-                                                </View>
+                            <Text style={{ color: msg.response ? '#000' : '#fff' }}>
+                                {msg.response ? (typeof msg.response.response === 'string' ? msg.response.response : '[No response text]') : msg.message}
+                            </Text>
+                            {msg.response && idx === messages.length - 1 && msg.response.suggested_actions && msg.response.suggested_actions.length > 0 && (
+                                msg.response.suggested_actions.map((suggestion, index) => (
+                                    rejectedIndexes.includes(index) ? null : (
+                                        <View key={index} style={styles.suggestionContainer}>
+                                            <Text style={styles.suggestionText}>
+                                                {suggestion.action}: {suggestion.parameters.title}
+                                            </Text>
+                                            <View style={{ flexDirection: 'row' }}>
+                                                <TouchableOpacity 
+                                                    style={styles.acceptButton}
+                                                    onPress={() => handleAcceptSuggestion(suggestion)}
+                                                >
+                                                    <Text style={styles.acceptButtonText}>Accept</Text>
+                                                </TouchableOpacity>
+                                                <TouchableOpacity
+                                                    style={styles.rejectButton}
+                                                    onPress={() => handleRejectSuggestion(index)}
+                                                >
+                                                    <Text style={styles.rejectButtonText}>Reject</Text>
+                                                </TouchableOpacity>
                                             </View>
-                                        )
-                                    ))
-                                )}
-                            </View>
+                                        </View>
+                                    )
+                                ))
+                            )}
                         </View>
-                    ))}
-                    {isLoading && (
-                        <ActivityIndicator size="large" color="#0000ff" style={{ marginVertical: 8 }} />
-                    )}
-                </View>
-            </View>
+                    </View>
+                ))}
+                {isLoading && (
+                    <ActivityIndicator size="large" color="#0000ff" style={{ marginVertical: 8 }} />
+                )}
+            </ScrollView>
 
-            <View style={styles.inputContainer}>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-end', padding: 8 }}>
                 <TextInput
-                    style={styles.input}
+                    style={[styles.input, { marginRight: 8 }]}
                     value={message}
                     onChangeText={setMessage}
                     placeholder="Ask Velo to help with your tasks..."
@@ -143,12 +163,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onClose }) => {
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#fff',
-        borderRadius: 10,
-        padding: 16,
-    },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -163,19 +177,6 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: 'bold',
         color: '#666',
-    },
-    responseContainer: {
-        flex: 1,
-        marginBottom: 16,
-    },
-    responseText: {
-        fontSize: 16,
-        marginBottom: 12,
-    },
-    errorText: {
-        color: '#f44336',
-        fontSize: 16,
-        marginBottom: 12,
     },
     suggestionContainer: {
         flexDirection: 'row',
@@ -211,10 +212,6 @@ const styles = StyleSheet.create({
     rejectButtonText: {
         color: '#fff',
         fontSize: 14,
-    },
-    inputContainer: {
-        flexDirection: 'row',
-        alignItems: 'flex-end',
     },
     input: {
         flex: 1,
