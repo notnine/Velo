@@ -18,6 +18,8 @@ import { Task, addTask, deleteTask } from '../store/taskSlice';
 import AddTaskModal from '../../components/AddTaskModal';
 import TaskDetailsModal from '../../components/TaskDetailsModal';
 import DayDetailView from '../../components/DayDetailView';
+import CustomBottomSheet from '../../components/CustomBottomSheet';
+import { ChatInterface } from '../../components/ChatInterface';
 
 const DAYS_OF_WEEK = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const MONTHS = [
@@ -112,6 +114,7 @@ export default function CalendarScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const theme = useTheme();
   const dispatch = useDispatch();
+  const [isAssistantVisible, setIsAssistantVisible] = useState(false);
   
   // Generate 12 months of data centered on the current month
   const today = new Date();
@@ -193,14 +196,11 @@ export default function CalendarScreen() {
             icon="chat-processing"
             size={24}
             iconColor="#FF3B30"
-            onPress={() => {
-              // TODO: Implement LLM interaction modal with both text and voice input
-              console.log('LLM interaction to be implemented');
-            }}
+            onPress={() => setIsAssistantVisible(true)}
             style={styles.micButton}
           />
           <IconButton
-            icon="plus" 
+            icon="plus"
             onPress={() => setIsAddModalVisible(true)}
           />
         </View>
@@ -310,6 +310,13 @@ export default function CalendarScreen() {
           month={MONTHS[selectedDate.getMonth()]}
         />
       )}
+
+      <CustomBottomSheet
+        visible={isAssistantVisible}
+        onClose={() => setIsAssistantVisible(false)}
+      >
+        <ChatInterface onClose={() => setIsAssistantVisible(false)} />
+      </CustomBottomSheet>
     </SafeAreaView>
   );
 }
@@ -336,9 +343,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingTop: 4,
-  },
-  micButton: {
-    marginRight: -8,
   },
   title: {
     flex: 1,
@@ -415,5 +419,8 @@ const styles = StyleSheet.create({
     color: '#939393',
     textAlign: 'right',
     marginTop: 2,
+  },
+  micButton: {
+    marginRight: -8,
   },
 }); 

@@ -1,9 +1,9 @@
 import React from 'react';
 import { View, TextInput, TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from '../store';
-import { Task } from '../store/taskSlice';
-import { sendMessage } from '../store/llmSlice';
+import { RootState, AppDispatch } from '../app/store';
+import { Task } from '../app/store/taskSlice';
+import { sendMessage } from '../app/store/llmSlice';
 
 interface ChatInterfaceProps {
     onClose: () => void;
@@ -27,8 +27,9 @@ interface LLMResponse {
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onClose }) => {
     const [message, setMessage] = React.useState('');
-    const dispatch = useDispatch();
-    const tasks = useSelector((state: RootState) => state.tasks.tasks);
+    const [rejectedIndexes, setRejectedIndexes] = React.useState<number[]>([]);
+    const dispatch = useDispatch<AppDispatch>();
+    const tasks = useSelector((state: RootState) => state.tasks.items);
     const { isLoading, lastResponse: response, error } = useSelector((state: RootState) => state.llm);
 
     const handleSend = async () => {
@@ -38,18 +39,23 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onClose }) => {
             current_tasks: tasks.map((task: Task) => ({
                 title: task.title,
                 description: task.description,
-                due_date: task.dueDate,
+                due_date: task.scheduledDate,
                 completed: task.completed
             }))
         };
 
         dispatch(sendMessage({ message, context }));
         setMessage('');
+        setRejectedIndexes([]); // Reset rejected suggestions on new message
     };
 
-    const handleAcceptSuggestion = (suggestion: any) => {
+    const handleAcceptSuggestion = (suggestion: LLMSuggestion) => {
         // TODO: Implement suggestion handling in Phase 4.2
         console.log('Accepting suggestion:', suggestion);
+    };
+
+    const handleRejectSuggestion = (index: number) => {
+        setRejectedIndexes(prev => [...prev, index]);
     };
 
     return (
@@ -71,17 +77,27 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onClose }) => {
                     <View>
                         <Text style={styles.responseText}>{response.response}</Text>
                         {response.suggested_actions?.map((suggestion, index) => (
+                            rejectedIndexes.includes(index) ? null : (
                             <View key={index} style={styles.suggestionContainer}>
                                 <Text style={styles.suggestionText}>
                                     {suggestion.action}: {suggestion.parameters.title}
                                 </Text>
-                                <TouchableOpacity 
-                                    style={styles.acceptButton}
-                                    onPress={() => handleAcceptSuggestion(suggestion)}
-                                >
-                                    <Text style={styles.acceptButtonText}>Accept</Text>
-                                </TouchableOpacity>
+                                <View style={{ flexDirection: 'row' }}>
+                                    <TouchableOpacity 
+                                        style={styles.acceptButton}
+                                        onPress={() => handleAcceptSuggestion(suggestion)}
+                                    >
+                                        <Text style={styles.acceptButtonText}>Accept</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={styles.rejectButton}
+                                        onPress={() => handleRejectSuggestion(index)}
+                                    >
+                                        <Text style={styles.rejectButtonText}>Reject</Text>
+                                    </TouchableOpacity>
+                                </View>
                             </View>
+                            )
                         ))}
                     </View>
                 ) : null}
@@ -163,6 +179,17 @@ const styles = StyleSheet.create({
         marginLeft: 8,
     },
     acceptButtonText: {
+        color: '#fff',
+        fontSize: 14,
+    },
+    rejectButton: {
+        backgroundColor: '#f44336',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 4,
+        marginLeft: 8,
+    },
+    rejectButtonText: {
         color: '#fff',
         fontSize: 14,
     },

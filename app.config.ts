@@ -1,6 +1,6 @@
 import 'dotenv/config';
 
-export default {
+const config = {
   expo: {
     name: 'Velo',
     slug: 'velo',
@@ -27,4 +27,6 @@ export default {
     ],
     newArchEnabled: true
   }
-}; 
+};
+
+export default config;

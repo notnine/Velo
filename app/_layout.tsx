@@ -2,12 +2,14 @@
  * Root layout component that manages app-wide configuration, authentication state, and navigation.
  * This is the highest level component that wraps the entire app with necessary providers.
  */
+import 'react-native-gesture-handler';
 import 'react-native-url-polyfill/auto';
 import { useEffect, useState } from 'react';
 import { Stack, router, Slot, useRouter, useSegments } from 'expo-router';
 import { Provider as ReduxProvider } from 'react-redux';
 import { PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { store } from './store';
 import { supabase } from '../lib/supabase';
 import { Session } from '@supabase/supabase-js';
@@ -53,12 +55,14 @@ export default function RootLayout() {
   }, [session, segments, isLoading]);
 
   return (
-    <ReduxProvider store={store}>
-      <PaperProvider>
-        <SafeAreaProvider>
-          <Slot />
-        </SafeAreaProvider>
-      </PaperProvider>
-    </ReduxProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ReduxProvider store={store}>
+        <PaperProvider>
+          <SafeAreaProvider>
+            <Slot />
+          </SafeAreaProvider>
+        </PaperProvider>
+      </ReduxProvider>
+    </GestureHandlerRootView>
   );
 } 
