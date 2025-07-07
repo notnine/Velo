@@ -1,11 +1,14 @@
 # Velo MVP Development Plan
 
-This document outlines the development strategy for the Velo MVP, focusing on automated task scheduling with minimal user interaction.
+This document outlines the development strategy for the Velo MVP, focusing on automated task scheduling, local data storage, minimal code complexity, and minimal user interaction.
 
 ## Core Principles
-- **Automation First**: Minimize user interaction, maximize automation
+- Frontend remains simple and focused on display/basic interactions
+- Data persistence handled locally for MVP
+- Each phase must be fully tested before moving on
+- Features are added incrementally
+- Focus on core functionality first
 - **Voice-Driven**: Use voice conversation for natural task creation
-- **Smart Defaults**: LLM learns user preferences and suggests optimal scheduling
 - **Zero-Friction**: Tasks should be created with minimal user input
 - **Conversational Control**: Users can edit/reject via voice commands
 
@@ -50,20 +53,32 @@ This document outlines the development strategy for the Velo MVP, focusing on au
 - [x] Set up environment variables for API keys
 
 ### 4.2 Voice Conversation System
+- [ ] **UI & Entry Point**
+  - [ ] Remove text input from assistant/chat UI
+  - [ ] Add a single "Start Conversation" button to initiate voice mode
+  - [ ] Add visual indicators for listening, thinking, and speaking states
+  - [ ] Add a manual "End Conversation" button
+
 - [ ] **Voice Input Integration**
-  - [ ] Implement speech-to-text functionality
-  - [ ] Add voice recording button (hold-to-talk)
-  - [ ] Handle voice input errors and retry logic
+  - [ ] Integrate speech-to-text (STT) library
+  - [ ] Start listening for user speech on button tap
+  - [ ] Detect end of user speech and handle errors/timeouts
 
-- [ ] **Conversational Context Management**
-  - [ ] Store conversation history in Redux
-  - [ ] Send conversation context with each LLM request
-  - [ ] Implement session management for ongoing conversations
+- [ ] **Conversation Turn Management**
+  - [ ] Send transcribed user input to LLM backend
+  - [ ] Store conversation history in Redux for context
+  - [ ] Receive and display LLM response
+  - [ ] Use text-to-speech (TTS) to play LLM response aloud
+  - [ ] Automatically resume listening for user's next response
+  - [ ] Alternate between listening and speaking until conversation ends
 
-- [ ] **LLM Response Handling**
-  - [ ] Update backend to handle conversational responses
-  - [ ] Implement text-to-speech for LLM responses
-  - [ ] Add conversation flow: user input → LLM response → user confirmation/edit/reject
+- [ ] **Conversation End Detection**
+  - [ ] Detect end of conversation (LLM signals, user says stop phrase, or timeout)
+  - [ ] End voice mode and reset UI state
+
+- [ ] **Backend & LLM Updates**
+  - [ ] Update backend to handle conversational context and multi-turn flow
+  - [ ] Ensure LLM can signal end of conversation in its responses
 
 ### 4.3 Smart Task Creation
 - [ ] **Automated Scheduling**
@@ -107,11 +122,10 @@ This document outlines the development strategy for the Velo MVP, focusing on au
 - User experience testing
 
 ## Documentation
-- Voice interaction guide
-- Conversation flow documentation
-- LLM prompt engineering guide
-- User preference schema
+- Setup guide
+- Local storage schema
+- Component documentation
 
 ---
 
-This plan focuses on creating a truly automated task scheduling system where users can create and manage tasks through natural voice conversation, minimizing the need for manual interaction with the app. 
+This plan focuses on the MVP phase with local data storage. Future versions may include backend integration and additional features. 
