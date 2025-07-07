@@ -38,6 +38,7 @@ export default function TasksScreen() {
   const tasks = useSelector((state: RootState) => state.tasks.items);
   const dispatch = useDispatch();
   const theme = useTheme();
+  const [conversationState, setConversationState] = useState<'idle' | 'listening' | 'thinking' | 'speaking'>('idle');
 
   // Filter tasks for today and sort by start time
   const todaysTasks = useMemo(() => {
@@ -111,6 +112,21 @@ export default function TasksScreen() {
         </View>
         <View style={styles.headerRight}>
           <IconButton
+            icon="microphone"
+            size={24}
+            iconColor="#FF3B30"
+            onPress={() => {
+              // Placeholder: cycle through states for demo
+              setConversationState((prev) => {
+                if (prev === 'idle') return 'listening';
+                if (prev === 'listening') return 'thinking';
+                if (prev === 'thinking') return 'speaking';
+                return 'idle';
+              });
+            }}
+            style={styles.micButton}
+          />
+          <IconButton
             icon="plus"
             onPress={() => {
               setEditingTask(undefined);
@@ -118,6 +134,13 @@ export default function TasksScreen() {
             }}
           />
         </View>
+      </View>
+      {/* Conversation State Indicator */}
+      <View style={styles.conversationIndicator}>
+        {conversationState === 'idle' && <Text style={styles.indicatorIdle}>Idle</Text>}
+        {conversationState === 'listening' && <Text style={styles.indicatorListening}>Listening...</Text>}
+        {conversationState === 'thinking' && <Text style={styles.indicatorThinking}>Thinking...</Text>}
+        {conversationState === 'speaking' && <Text style={styles.indicatorSpeaking}>Speaking...</Text>}
       </View>
 
       <FlatList
@@ -180,5 +203,29 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+  },
+  micButton: {
+    marginRight: 8,
+  },
+  conversationIndicator: {
+    minHeight: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  indicatorIdle: {
+    color: '#888',
+  },
+  indicatorListening: {
+    color: '#007AFF',
+    fontWeight: 'bold',
+  },
+  indicatorThinking: {
+    color: '#FF9500',
+    fontWeight: 'bold',
+  },
+  indicatorSpeaking: {
+    color: '#34C759',
+    fontWeight: 'bold',
   },
 }); 

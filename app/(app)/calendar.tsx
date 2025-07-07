@@ -113,6 +113,7 @@ export default function CalendarScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const theme = useTheme();
   const dispatch = useDispatch();
+  const [conversationState, setConversationState] = useState<'idle' | 'listening' | 'thinking' | 'speaking'>('idle');
   
   // Generate 12 months of data centered on the current month
   const today = new Date();
@@ -191,10 +192,32 @@ export default function CalendarScreen() {
         </TouchableOpacity>
         <View style={styles.headerRight}>
           <IconButton
+            icon="microphone"
+            size={24}
+            iconColor="#FF3B30"
+            onPress={() => {
+              // Placeholder: cycle through states for demo
+              setConversationState((prev) => {
+                if (prev === 'idle') return 'listening';
+                if (prev === 'listening') return 'thinking';
+                if (prev === 'thinking') return 'speaking';
+                return 'idle';
+              });
+            }}
+            style={styles.micButton}
+          />
+          <IconButton
             icon="plus"
             onPress={() => setIsAddModalVisible(true)}
           />
         </View>
+      </View>
+      {/* Conversation State Indicator */}
+      <View style={styles.conversationIndicator}>
+        {conversationState === 'idle' && <Text style={styles.indicatorIdle}>Idle</Text>}
+        {conversationState === 'listening' && <Text style={styles.indicatorListening}>Listening...</Text>}
+        {conversationState === 'thinking' && <Text style={styles.indicatorThinking}>Thinking...</Text>}
+        {conversationState === 'speaking' && <Text style={styles.indicatorSpeaking}>Speaking...</Text>}
       </View>
 
       <View style={styles.weekDayHeader}>
@@ -403,5 +426,29 @@ const styles = StyleSheet.create({
     color: '#939393',
     textAlign: 'right',
     marginTop: 2,
+  },
+  micButton: {
+    marginRight: 8,
+  },
+  conversationIndicator: {
+    minHeight: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  indicatorIdle: {
+    color: '#888',
+  },
+  indicatorListening: {
+    color: '#007AFF',
+    fontWeight: 'bold',
+  },
+  indicatorThinking: {
+    color: '#FF9500',
+    fontWeight: 'bold',
+  },
+  indicatorSpeaking: {
+    color: '#34C759',
+    fontWeight: 'bold',
   },
 }); 
