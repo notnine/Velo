@@ -102,3 +102,22 @@ app-example
 
 # Expo OTA updates
 .expo-shared/
+
+# React Native / Expo
+node_modules/
+
+# iOS
+ios/build/
+ios/Pods/
+ios/DerivedData/
+ios/*.xcworkspace
+ios/*.xcuserstate
+ios/*.xcuserdata
+
+# Android
+android/build/
+android/app/build/
+
+# Misc
+*.tmp
+*.swp

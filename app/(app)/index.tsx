@@ -11,6 +11,7 @@ import { RootState } from '../store';
 import { Task, addTask, toggleTask, deleteTask, updateTask } from '../store/taskSlice';
 import TaskItem from '../../components/TaskItem';
 import AddTaskModal from '../../components/AddTaskModal';
+import Voice from '@react-native-voice/voice';
 
 const isSameDay = (date1: string, date2: string) => {
   const d1 = new Date(date1);
@@ -39,6 +40,29 @@ export default function TasksScreen() {
   const dispatch = useDispatch();
   const theme = useTheme();
   const [conversationState, setConversationState] = useState<'idle' | 'listening' | 'thinking' | 'speaking'>('idle');
+  const [recognizedText, setRecognizedText] = useState('');
+
+  React.useEffect(() => {
+    Voice.onSpeechResults = (e: { value?: string[] }) => {
+      setRecognizedText(e.value ? e.value[0] : '');
+      setConversationState('thinking');
+    };
+    Voice.onSpeechStart = () => setConversationState('listening');
+    Voice.onSpeechEnd = () => setConversationState('thinking');
+    return () => {
+      Voice.destroy().then(Voice.removeAllListeners);
+    };
+  }, []);
+
+  const startListening = async () => {
+    setRecognizedText('');
+    setConversationState('listening');
+    try {
+      await Voice.start('en-US');
+    } catch (e) {
+      setConversationState('idle');
+    }
+  };
 
   // Filter tasks for today and sort by start time
   const todaysTasks = useMemo(() => {
@@ -115,15 +139,7 @@ export default function TasksScreen() {
             icon="microphone"
             size={24}
             iconColor="#FF3B30"
-            onPress={() => {
-              // Placeholder: cycle through states for demo
-              setConversationState((prev) => {
-                if (prev === 'idle') return 'listening';
-                if (prev === 'listening') return 'thinking';
-                if (prev === 'thinking') return 'speaking';
-                return 'idle';
-              });
-            }}
+            onPress={startListening}
             style={styles.micButton}
           />
           <IconButton
@@ -142,6 +158,12 @@ export default function TasksScreen() {
         {conversationState === 'thinking' && <Text style={styles.indicatorThinking}>Thinking...</Text>}
         {conversationState === 'speaking' && <Text style={styles.indicatorSpeaking}>Speaking...</Text>}
       </View>
+      {/* Recognized Speech Placeholder */}
+      {recognizedText ? (
+        <View style={styles.recognizedTextContainer}>
+          <Text style={styles.recognizedText}>{recognizedText}</Text>
+        </View>
+      ) : null}
 
       <FlatList
         data={todaysTasks}
@@ -227,5 +249,14 @@ const styles = StyleSheet.create({
   indicatorSpeaking: {
     color: '#34C759',
     fontWeight: 'bold',
+  },
+  recognizedTextContainer: {
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  recognizedText: {
+    color: '#333',
+    fontSize: 16,
+    fontStyle: 'italic',
   },
 }); 
