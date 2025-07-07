@@ -41,26 +41,53 @@ export default function TasksScreen() {
   const theme = useTheme();
   const [conversationState, setConversationState] = useState<'idle' | 'listening' | 'thinking' | 'speaking'>('idle');
   const [recognizedText, setRecognizedText] = useState('');
+  const [conversationEnded, setConversationEnded] = useState(false);
+  const [isRecognizing, setIsRecognizing] = useState(false);
 
   React.useEffect(() => {
     Voice.onSpeechResults = (e: { value?: string[] }) => {
       setRecognizedText(e.value ? e.value[0] : '');
       setConversationState('thinking');
+      setIsRecognizing(false);
     };
-    Voice.onSpeechStart = () => setConversationState('listening');
-    Voice.onSpeechEnd = () => setConversationState('thinking');
+    Voice.onSpeechStart = () => {
+      setConversationState('listening');
+      setIsRecognizing(true);
+    };
+    Voice.onSpeechEnd = () => {
+      setConversationState('thinking');
+      setIsRecognizing(false);
+    };
     return () => {
       Voice.destroy().then(Voice.removeAllListeners);
     };
   }, []);
 
-  const startListening = async () => {
-    setRecognizedText('');
-    setConversationState('listening');
-    try {
-      await Voice.start('en-US');
-    } catch (e) {
+  const isActive = conversationState !== 'idle';
+
+  const handleMicButton = async () => {
+    if (!isActive) {
+      setRecognizedText('');
+      setConversationEnded(false);
+      setConversationState('listening');
+      setIsRecognizing(true);
+      try {
+        await Voice.start('en-US');
+      } catch (e) {
+        setConversationState('idle');
+        setIsRecognizing(false);
+      }
+    } else {
+      if (isRecognizing) {
+        await Voice.stop();
+        await Voice.destroy();
+        setIsRecognizing(false);
+      } else {
+        await Voice.destroy();
+      }
       setConversationState('idle');
+      setConversationEnded(true);
+      setTimeout(() => setConversationEnded(false), 1500);
     }
   };
 
@@ -139,7 +166,7 @@ export default function TasksScreen() {
             icon="microphone"
             size={24}
             iconColor="#FF3B30"
-            onPress={startListening}
+            onPress={handleMicButton}
             style={styles.micButton}
           />
           <IconButton
@@ -164,6 +191,11 @@ export default function TasksScreen() {
           <Text style={styles.recognizedText}>{recognizedText}</Text>
         </View>
       ) : null}
+      {conversationEnded && (
+        <View style={styles.endedContainer}>
+          <Text style={styles.endedText}>Conversation ended</Text>
+        </View>
+      )}
 
       <FlatList
         data={todaysTasks}
@@ -258,5 +290,14 @@ const styles = StyleSheet.create({
     color: '#333',
     fontSize: 16,
     fontStyle: 'italic',
+  },
+  endedContainer: {
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  endedText: {
+    color: '#FF3B30',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 }); 

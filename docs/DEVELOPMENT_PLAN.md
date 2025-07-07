@@ -54,13 +54,12 @@ This document outlines the development strategy for the Velo MVP, focusing on au
 
 ### 4.2 Voice Conversation System
 - [ ] **UI & Entry Point**
-  - [ ] Remove text input from assistant/chat UI
-  - [ ] Add a single "Start Conversation" button to initiate voice mode
-  - [ ] Add visual indicators for listening, thinking, and speaking states
-  - [ ] Add a manual "End Conversation" button
+  - [x] Remove text input from assistant/chat UI
+  - [x] Add a single "Start Conversation" button to initiate voice mode
+  - [x] Add visual indicators for listening, thinking, and speaking states
 
 - [ ] **Voice Input Integration**
-  - [ ] Integrate speech-to-text (STT) library
+  - [x] Integrate speech-to-text (STT) library
   - [ ] Start listening for user speech on button tap
   - [ ] Detect end of user speech and handle errors/timeouts
 
