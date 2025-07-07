@@ -111,16 +111,6 @@ export default function TasksScreen() {
         </View>
         <View style={styles.headerRight}>
           <IconButton
-            icon="chat-processing"
-            size={24}
-            iconColor="#FF3B30"
-            onPress={() => {
-              // TODO: Implement LLM interaction modal with both text and voice input
-              console.log('LLM interaction to be implemented');
-            }}
-            style={styles.micButton}
-          />
-          <IconButton
             icon="plus"
             onPress={() => {
               setEditingTask(undefined);
@@ -180,9 +170,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingTop: 4,
-  },
-  micButton: {
-    marginRight: -8,
   },
   taskCount: {
     color: '#666',

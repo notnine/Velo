@@ -19,7 +19,6 @@ import AddTaskModal from '../../components/AddTaskModal';
 import TaskDetailsModal from '../../components/TaskDetailsModal';
 import DayDetailView from '../../components/DayDetailView';
 import CustomBottomSheet from '../../components/CustomBottomSheet';
-import { ChatInterface } from '../../components/ChatInterface';
 
 const DAYS_OF_WEEK = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const MONTHS = [
@@ -114,7 +113,6 @@ export default function CalendarScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const theme = useTheme();
   const dispatch = useDispatch();
-  const [isAssistantVisible, setIsAssistantVisible] = useState(false);
   
   // Generate 12 months of data centered on the current month
   const today = new Date();
@@ -192,13 +190,6 @@ export default function CalendarScreen() {
           </Text>
         </TouchableOpacity>
         <View style={styles.headerRight}>
-          <IconButton
-            icon="chat-processing"
-            size={24}
-            iconColor="#FF3B30"
-            onPress={() => setIsAssistantVisible(true)}
-            style={styles.micButton}
-          />
           <IconButton
             icon="plus"
             onPress={() => setIsAddModalVisible(true)}
@@ -310,13 +301,6 @@ export default function CalendarScreen() {
           month={MONTHS[selectedDate.getMonth()]}
         />
       )}
-
-      <CustomBottomSheet
-        visible={isAssistantVisible}
-        onClose={() => setIsAssistantVisible(false)}
-      >
-        <ChatInterface onClose={() => setIsAssistantVisible(false)} />
-      </CustomBottomSheet>
     </SafeAreaView>
   );
 }
@@ -419,8 +403,5 @@ const styles = StyleSheet.create({
     color: '#939393',
     textAlign: 'right',
     marginTop: 2,
-  },
-  micButton: {
-    marginRight: -8,
   },
 }); 
