@@ -1,3 +1,0 @@
-"""
-Velo backend application package.
-""" 
