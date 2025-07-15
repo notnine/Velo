@@ -11,7 +11,6 @@ import { RootState } from '../store';
 import { Task, addTask, toggleTask, deleteTask, updateTask } from '../store/taskSlice';
 import TaskItem from '../../components/TaskItem';
 import AddTaskModal from '../../components/AddTaskModal';
-import Voice from '@react-native-voice/voice';
 
 const isSameDay = (date1: string, date2: string) => {
   const d1 = new Date(date1);
@@ -39,57 +38,6 @@ export default function TasksScreen() {
   const tasks = useSelector((state: RootState) => state.tasks.items);
   const dispatch = useDispatch();
   const theme = useTheme();
-  const [conversationState, setConversationState] = useState<'idle' | 'listening' | 'thinking' | 'speaking'>('idle');
-  const [recognizedText, setRecognizedText] = useState('');
-  const [conversationEnded, setConversationEnded] = useState(false);
-  const [isRecognizing, setIsRecognizing] = useState(false);
-
-  React.useEffect(() => {
-    Voice.onSpeechResults = (e: { value?: string[] }) => {
-      setRecognizedText(e.value ? e.value[0] : '');
-      setConversationState('thinking');
-      setIsRecognizing(false);
-    };
-    Voice.onSpeechStart = () => {
-      setConversationState('listening');
-      setIsRecognizing(true);
-    };
-    Voice.onSpeechEnd = () => {
-      setConversationState('thinking');
-      setIsRecognizing(false);
-    };
-    return () => {
-      Voice.destroy().then(Voice.removeAllListeners);
-    };
-  }, []);
-
-  const isActive = conversationState !== 'idle';
-
-  const handleMicButton = async () => {
-    if (!isActive) {
-      setRecognizedText('');
-      setConversationEnded(false);
-      setConversationState('listening');
-      setIsRecognizing(true);
-      try {
-        await Voice.start('en-US');
-      } catch (e) {
-        setConversationState('idle');
-        setIsRecognizing(false);
-      }
-    } else {
-      if (isRecognizing) {
-        await Voice.stop();
-        await Voice.destroy();
-        setIsRecognizing(false);
-      } else {
-        await Voice.destroy();
-      }
-      setConversationState('idle');
-      setConversationEnded(true);
-      setTimeout(() => setConversationEnded(false), 1500);
-    }
-  };
 
   // Filter tasks for today and sort by start time
   const todaysTasks = useMemo(() => {
@@ -163,13 +111,6 @@ export default function TasksScreen() {
         </View>
         <View style={styles.headerRight}>
           <IconButton
-            icon="microphone"
-            size={24}
-            iconColor="#FF3B30"
-            onPress={handleMicButton}
-            style={styles.micButton}
-          />
-          <IconButton
             icon="plus"
             onPress={() => {
               setEditingTask(undefined);
@@ -178,24 +119,7 @@ export default function TasksScreen() {
           />
         </View>
       </View>
-      {/* Conversation State Indicator */}
-      <View style={styles.conversationIndicator}>
-        {conversationState === 'idle' && <Text style={styles.indicatorIdle}>Idle</Text>}
-        {conversationState === 'listening' && <Text style={styles.indicatorListening}>Listening...</Text>}
-        {conversationState === 'thinking' && <Text style={styles.indicatorThinking}>Thinking...</Text>}
-        {conversationState === 'speaking' && <Text style={styles.indicatorSpeaking}>Speaking...</Text>}
-      </View>
-      {/* Recognized Speech Placeholder */}
-      {recognizedText ? (
-        <View style={styles.recognizedTextContainer}>
-          <Text style={styles.recognizedText}>{recognizedText}</Text>
-        </View>
-      ) : null}
-      {conversationEnded && (
-        <View style={styles.endedContainer}>
-          <Text style={styles.endedText}>Conversation ended</Text>
-        </View>
-      )}
+      {/* Remove conversation state indicator, mic button, and ended message */}
 
       <FlatList
         data={todaysTasks}
@@ -257,47 +181,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-  },
-  micButton: {
-    marginRight: 8,
-  },
-  conversationIndicator: {
-    minHeight: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 4,
-  },
-  indicatorIdle: {
-    color: '#888',
-  },
-  indicatorListening: {
-    color: '#007AFF',
-    fontWeight: 'bold',
-  },
-  indicatorThinking: {
-    color: '#FF9500',
-    fontWeight: 'bold',
-  },
-  indicatorSpeaking: {
-    color: '#34C759',
-    fontWeight: 'bold',
-  },
-  recognizedTextContainer: {
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  recognizedText: {
-    color: '#333',
-    fontSize: 16,
-    fontStyle: 'italic',
-  },
-  endedContainer: {
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  endedText: {
-    color: '#FF3B30',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
 }); 

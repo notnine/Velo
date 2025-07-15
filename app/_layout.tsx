@@ -13,6 +13,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { store } from './store';
 import { supabase } from '../lib/supabase';
 import { Session } from '@supabase/supabase-js';
+import { VoiceConversationProvider } from './lib/VoiceConversationContext';
+import FloatingMicButton from 'app/components/FloatingMicButton';
 
 export default function RootLayout() {
   const [session, setSession] = useState<Session | null>(null);
@@ -59,7 +61,10 @@ export default function RootLayout() {
       <ReduxProvider store={store}>
         <PaperProvider>
           <SafeAreaProvider>
-            <Slot />
+            <VoiceConversationProvider>
+              <Slot />
+              <FloatingMicButton />
+            </VoiceConversationProvider>
           </SafeAreaProvider>
         </PaperProvider>
       </ReduxProvider>
