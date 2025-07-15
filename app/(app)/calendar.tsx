@@ -114,19 +114,16 @@ export default function CalendarScreen() {
   const theme = useTheme();
   const dispatch = useDispatch();
 
-  // Generate 12 months of data centered on the current month
+  // Generate 12 months starting from the current month
   const today = new Date();
-  const startMonth = today.getMonth() - 6;
+  const startMonth = today.getMonth();
   const startYear = today.getFullYear();
-  
+
   const monthsData: MonthData[] = [];
   for (let i = 0; i < 12; i++) {
     let month = startMonth + i;
     let year = startYear;
-    if (month < 0) {
-      month += 12;
-      year -= 1;
-    } else if (month > 11) {
+    while (month > 11) {
       month -= 12;
       year += 1;
     }
@@ -180,6 +177,10 @@ export default function CalendarScreen() {
     const dateStr = date.toISOString().split('T')[0];
     return tasks.filter(task => task.scheduledDate === dateStr);
   };
+
+  React.useEffect(() => {
+    // Remove the initial scroll effect
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
