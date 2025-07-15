@@ -21,6 +21,7 @@ export default function RootLayout() {
   const [isLoading, setIsLoading] = useState(true);
   const segments = useSegments();
   const router = useRouter();
+  const inAuthGroup = segments[0] === '(auth)';
 
   useEffect(() => {
     // Check for existing session
@@ -42,7 +43,6 @@ export default function RootLayout() {
   useEffect(() => {
     if (isLoading) return; // Don't navigate while loading
     
-    const inAuthGroup = segments[0] === '(auth)';
     console.log('Current route:', segments.join('/'));
     console.log('In auth group:', inAuthGroup);
     console.log('Has session:', !!session);
@@ -63,7 +63,7 @@ export default function RootLayout() {
           <SafeAreaProvider>
             <VoiceConversationProvider>
               <Slot />
-              <FloatingMicButton />
+              {!inAuthGroup && <FloatingMicButton />}
             </VoiceConversationProvider>
           </SafeAreaProvider>
         </PaperProvider>

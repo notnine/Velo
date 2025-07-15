@@ -265,12 +265,14 @@ export default function CalendarScreen() {
         ))}
       </ScrollView>
 
-      <AddTaskModal
-        visible={isAddModalVisible}
-        onDismiss={() => setIsAddModalVisible(false)}
-        onSubmit={handleSubmit}
-        editTask={selectedTask || undefined}
-      />
+      {/* Only render AddTaskModal when isAddModalVisible is true */}
+      {isAddModalVisible && (
+        <AddTaskModal
+          onDismiss={() => setIsAddModalVisible(false)}
+          onSubmit={handleSubmit}
+          editTask={selectedTask || undefined}
+        />
+      )}
 
       {selectedTask && (
         <TaskDetailsModal
@@ -282,7 +284,11 @@ export default function CalendarScreen() {
           onEdit={handleEditTask}
           onDelete={handleDeleteTask}
           task={selectedTask}
-          month={MONTHS[new Date(selectedTask.scheduledDate || '').getMonth()]}
+          month={MONTHS[
+            selectedTask && selectedTask.scheduledDate
+              ? Number(selectedTask.scheduledDate.split('-')[1]) - 1
+              : 0
+          ]}
         />
       )}
 

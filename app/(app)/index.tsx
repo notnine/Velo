@@ -88,8 +88,8 @@ export default function TasksScreen() {
   };
 
   const handleModalDismiss = () => {
-    setIsModalVisible(false);
     setEditingTask(undefined);
+    setIsModalVisible(false);
   };
 
   const handleToggleTask = (id: string) => {
@@ -140,12 +140,14 @@ export default function TasksScreen() {
         )}
       />
 
-      <AddTaskModal
-        visible={isModalVisible}
-        onDismiss={handleModalDismiss}
-        onSubmit={handleAddTask}
-        editTask={editingTask}
-      />
+      {/* Only render AddTaskModal when isModalVisible is true */}
+      {isModalVisible && (
+        <AddTaskModal
+          onDismiss={handleModalDismiss}
+          onSubmit={handleAddTask}
+          editTask={editingTask}
+        />
+      )}
     </SafeAreaView>
   );
 }

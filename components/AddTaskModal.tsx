@@ -9,13 +9,12 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Task } from '../store/taskSlice';
 
 interface AddTaskModalProps {
-  visible: boolean;
   onDismiss: () => void;
   onSubmit: (title: string, description: string, startDate: Date, endDate: Date) => void;
   editTask?: Task;
 }
 
-export default function AddTaskModal({ visible, onDismiss, onSubmit, editTask }: AddTaskModalProps) {
+export default function AddTaskModal({ onDismiss, onSubmit, editTask }: AddTaskModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState(new Date());
@@ -29,14 +28,12 @@ export default function AddTaskModal({ visible, onDismiss, onSubmit, editTask }:
     if (editTask) {
       setTitle(editTask.title);
       setDescription(editTask.description);
-      
       // Parse the scheduled date, ensuring we get the correct local date
       let taskDate = new Date();
       if (editTask.scheduledDate) {
         const [year, month, day] = editTask.scheduledDate.split('-').map(Number);
         taskDate = new Date(year, month - 1, day); // month is 0-based in Date constructor
       }
-      
       // Parse time strings (e.g., "1:00PM")
       const parseTime = (timeStr: string, baseDate: Date) => {
         const [time, period] = timeStr.match(/(\d+:\d+)(AM|PM)/)?.slice(1) || [];
@@ -51,7 +48,6 @@ export default function AddTaskModal({ visible, onDismiss, onSubmit, editTask }:
         }
         return baseDate;
       };
-
       if (editTask.startTime && editTask.endTime) {
         setStartDate(parseTime(editTask.startTime, taskDate));
         setEndDate(parseTime(editTask.endTime, taskDate));
@@ -65,7 +61,7 @@ export default function AddTaskModal({ visible, onDismiss, onSubmit, editTask }:
       setStartDate(new Date());
       setEndDate(new Date(new Date().getTime() + 60 * 60 * 1000));
     }
-  }, [editTask, visible]);
+  }, [editTask]);
 
   const handleDescriptionSubmit = () => {
     Keyboard.dismiss();
@@ -153,7 +149,7 @@ export default function AddTaskModal({ visible, onDismiss, onSubmit, editTask }:
   return (
     <Portal>
       <Modal
-        visible={visible}
+        visible={true}
         onDismiss={onDismiss}
         contentContainerStyle={styles.container}
       >
