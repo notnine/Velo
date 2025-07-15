@@ -19,7 +19,6 @@ import AddTaskModal from '../../components/AddTaskModal';
 import TaskDetailsModal from '../../components/TaskDetailsModal';
 import DayDetailView from '../../components/DayDetailView';
 import CustomBottomSheet from '../../components/CustomBottomSheet';
-import { ChatInterface } from '../../components/ChatInterface';
 
 const DAYS_OF_WEEK = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const MONTHS = [
@@ -114,21 +113,17 @@ export default function CalendarScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const theme = useTheme();
   const dispatch = useDispatch();
-  const [isAssistantVisible, setIsAssistantVisible] = useState(false);
-  
-  // Generate 12 months of data centered on the current month
+
+  // Generate 12 months starting from the current month
   const today = new Date();
-  const startMonth = today.getMonth() - 6;
+  const startMonth = today.getMonth();
   const startYear = today.getFullYear();
-  
+
   const monthsData: MonthData[] = [];
   for (let i = 0; i < 12; i++) {
     let month = startMonth + i;
     let year = startYear;
-    if (month < 0) {
-      month += 12;
-      year -= 1;
-    } else if (month > 11) {
+    while (month > 11) {
       month -= 12;
       year += 1;
     }
@@ -183,6 +178,10 @@ export default function CalendarScreen() {
     return tasks.filter(task => task.scheduledDate === dateStr);
   };
 
+  React.useEffect(() => {
+    // Remove the initial scroll effect
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -192,13 +191,6 @@ export default function CalendarScreen() {
           </Text>
         </TouchableOpacity>
         <View style={styles.headerRight}>
-          <IconButton
-            icon="chat-processing"
-            size={24}
-            iconColor="#FF3B30"
-            onPress={() => setIsAssistantVisible(true)}
-            style={styles.micButton}
-          />
           <IconButton
             icon="plus"
             onPress={() => setIsAddModalVisible(true)}
@@ -310,13 +302,6 @@ export default function CalendarScreen() {
           month={MONTHS[selectedDate.getMonth()]}
         />
       )}
-
-      <CustomBottomSheet
-        visible={isAssistantVisible}
-        onClose={() => setIsAssistantVisible(false)}
-      >
-        <ChatInterface onClose={() => setIsAssistantVisible(false)} />
-      </CustomBottomSheet>
     </SafeAreaView>
   );
 }
@@ -419,8 +404,5 @@ const styles = StyleSheet.create({
     color: '#939393',
     textAlign: 'right',
     marginTop: 2,
-  },
-  micButton: {
-    marginRight: -8,
   },
 }); 
