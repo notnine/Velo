@@ -27,13 +27,25 @@ const dateToTimeString = (date: Date): string => {
 };
 
 // Helper to compare two time strings (HH:mm format)
+// Now properly handles overnight ranges (e.g., 23:00 to 07:00)
 const isStartTimeBeforeEndTime = (start: string, end: string): boolean => {
   const [startHours, startMinutes] = start.split(':').map(Number);
   const [endHours, endMinutes] = end.split(':').map(Number);
   
-  if (startHours < endHours) return true;
-  if (startHours > endHours) return false;
-  return startMinutes < endMinutes;
+  // Convert to minutes for easier comparison
+  const startMinutesTotal = startHours * 60 + startMinutes;
+  const endMinutesTotal = endHours * 60 + endMinutes;
+  
+  // If end time is before start time, it's likely overnight
+  // For overnight ranges, we consider them valid if the difference is reasonable
+  if (endMinutesTotal < startMinutesTotal) {
+    // Check if it's a reasonable overnight range (at least 1 hour, at most 23 hours)
+    const overnightDuration = (24 * 60) - startMinutesTotal + endMinutesTotal;
+    return overnightDuration >= 60 && overnightDuration <= 23 * 60;
+  }
+  
+  // Regular same-day range
+  return endMinutesTotal > startMinutesTotal;
 };
 
 // Helper to add one hour to a time string (HH:mm format)
@@ -260,10 +272,7 @@ export const Settings: React.FC = () => {
           ...editingBlockedHour.range,
           end: timeString
         };
-        // Validate end time is after start time
-        if (!isStartTimeBeforeEndTime(newRange.start, newRange.end)) {
-          return;
-        }
+        // Removed validation - allow any time range
       }
 
       dispatch(updateBlockedHours({ index: editingBlockedHour.index, range: newRange }));

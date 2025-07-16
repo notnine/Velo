@@ -6,7 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Platform, TouchableOpacity, Keyboard } from 'react-native';
 import { Modal, Portal, TextInput, Button, Text, IconButton } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Task } from '../store/taskSlice';
+import { Task } from '../app/store/taskSlice';
 
 interface AddTaskModalProps {
   onDismiss: () => void;
@@ -23,6 +23,13 @@ export default function AddTaskModal({ onDismiss, onSubmit, editTask }: AddTaskM
   const [showStartTime, setShowStartTime] = useState(false);
   const [showEndDate, setShowEndDate] = useState(false);
   const [showEndTime, setShowEndTime] = useState(false);
+
+  // Helper function to check if two dates are on the same day
+  const isSameDay = (date1: Date, date2: Date): boolean => {
+    return date1.getFullYear() === date2.getFullYear() &&
+           date1.getMonth() === date2.getMonth() &&
+           date1.getDate() === date2.getDate();
+  };
 
   useEffect(() => {
     if (editTask) {
@@ -50,7 +57,15 @@ export default function AddTaskModal({ onDismiss, onSubmit, editTask }: AddTaskM
       };
       if (editTask.startTime && editTask.endTime) {
         setStartDate(parseTime(editTask.startTime, taskDate));
-        setEndDate(parseTime(editTask.endTime, taskDate));
+        
+        // Handle overnight tasks properly
+        if (editTask.endDate) {
+          const [endYear, endMonth, endDay] = editTask.endDate.split('-').map(Number);
+          const endTaskDate = new Date(endYear, endMonth - 1, endDay);
+          setEndDate(parseTime(editTask.endTime, endTaskDate));
+        } else {
+          setEndDate(parseTime(editTask.endTime, taskDate));
+        }
       } else {
         setStartDate(taskDate);
         setEndDate(new Date(taskDate.getTime() + 60 * 60 * 1000));
@@ -100,9 +115,11 @@ export default function AddTaskModal({ onDismiss, onSubmit, editTask }: AddTaskM
       newStartDate.setHours(startDate.getHours(), startDate.getMinutes());
       setStartDate(newStartDate);
       
-      // Update end date to maintain the same time difference
-      const timeDiff = endDate.getTime() - startDate.getTime();
-      setEndDate(new Date(newStartDate.getTime() + timeDiff));
+      // Auto-adjust end date to maintain time difference, but only if it's the same day
+      if (isSameDay(startDate, endDate)) {
+        const timeDiff = endDate.getTime() - startDate.getTime();
+        setEndDate(new Date(newStartDate.getTime() + timeDiff));
+      }
     }
   };
 
@@ -113,9 +130,10 @@ export default function AddTaskModal({ onDismiss, onSubmit, editTask }: AddTaskM
       newStartDate.setHours(selectedDate.getHours(), selectedDate.getMinutes());
       setStartDate(newStartDate);
       
-      // Set end time to 1 hour later if it's earlier than start time
+      // Auto-adjust end time to 1 hour later, but only if it's the same day
       const newEndDate = new Date(endDate);
-      if (newEndDate.getTime() <= newStartDate.getTime()) {
+      if (isSameDay(newStartDate, endDate)) {
+        // Same day - auto-adjust to 1 hour later
         newEndDate.setTime(newStartDate.getTime() + 60 * 60 * 1000);
         setEndDate(newEndDate);
       }
@@ -127,9 +145,15 @@ export default function AddTaskModal({ onDismiss, onSubmit, editTask }: AddTaskM
     if (selectedDate) {
       const newEndDate = new Date(selectedDate);
       newEndDate.setHours(endDate.getHours(), endDate.getMinutes());
-      if (newEndDate.getTime() <= startDate.getTime()) {
-        newEndDate.setTime(startDate.getTime() + 60 * 60 * 1000);
+      
+      // Validate date range, but allow overnight tasks
+      if (isSameDay(startDate, newEndDate)) {
+        // Same day - end time must be after start time
+        if (newEndDate.getTime() <= startDate.getTime()) {
+          newEndDate.setTime(startDate.getTime() + 60 * 60 * 1000);
+        }
       }
+      // Different days (overnight) - allow any date range
       setEndDate(newEndDate);
     }
   };
@@ -139,9 +163,15 @@ export default function AddTaskModal({ onDismiss, onSubmit, editTask }: AddTaskM
     if (selectedDate) {
       const newEndDate = new Date(endDate);
       newEndDate.setHours(selectedDate.getHours(), selectedDate.getMinutes());
-      if (newEndDate.getTime() <= startDate.getTime()) {
-        newEndDate.setTime(startDate.getTime() + 60 * 60 * 1000);
+      
+      // Validate time range, but allow overnight tasks
+      if (isSameDay(startDate, newEndDate)) {
+        // Same day - end time must be after start time
+        if (newEndDate.getTime() <= startDate.getTime()) {
+          newEndDate.setTime(startDate.getTime() + 60 * 60 * 1000);
+        }
       }
+      // Different days (overnight) - allow any time range
       setEndDate(newEndDate);
     }
   };
@@ -273,7 +303,7 @@ export default function AddTaskModal({ onDismiss, onSubmit, editTask }: AddTaskM
             mode="date"
             display={Platform.OS === 'ios' ? 'inline' : 'default'}
             onChange={handleEndDateChange}
-            minimumDate={startDate}
+            minimumDate={isSameDay(startDate, endDate) ? startDate : undefined}
           />
         )}
         {showEndTime && (

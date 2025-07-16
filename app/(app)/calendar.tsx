@@ -57,7 +57,13 @@ const getMonthData = (year: number, month: number, tasks: Task[]): MonthData => 
   // Add days of current month
   for (let date = 1; date <= daysInMonth; date++) {
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
-    const dayTasks = tasks.filter(task => task.scheduledDate === dateStr);
+    const dayTasks = tasks.filter(task => {
+      // Show task on start date
+      if (task.scheduledDate === dateStr) return true;
+      // Also show task on end date if it's different (overnight task)
+      if (task.endDate && task.endDate === dateStr) return true;
+      return false;
+    });
     days.push({
       date,
       tasks: dayTasks,
@@ -114,19 +120,26 @@ export default function CalendarScreen() {
   const theme = useTheme();
   const dispatch = useDispatch();
 
-  // Generate 12 months starting from the current month
+  // Generate 24 months: 12 months before current month + current month + 11 months after
   const today = new Date();
-  const startMonth = today.getMonth();
-  const startYear = today.getFullYear();
+  const currentMonth = today.getMonth();
+  const baseYear = today.getFullYear();
 
   const monthsData: MonthData[] = [];
-  for (let i = 0; i < 12; i++) {
-    let month = startMonth + i;
-    let year = startYear;
+  for (let i = -12; i < 12; i++) {
+    let month = currentMonth + i;
+    let year = baseYear;
+    
+    // Handle month overflow/underflow
     while (month > 11) {
       month -= 12;
       year += 1;
     }
+    while (month < 0) {
+      month += 12;
+      year -= 1;
+    }
+    
     monthsData.push(getMonthData(year, month, tasks));
   }
 
@@ -175,12 +188,11 @@ export default function CalendarScreen() {
   const getTasksForDate = (date: Date) => {
     if (!date) return [];
     const dateStr = date.toISOString().split('T')[0];
-    return tasks.filter(task => task.scheduledDate === dateStr);
+    return tasks.filter(task => {
+      // Show task if it starts on this date OR ends on this date (overnight task)
+      return task.scheduledDate === dateStr || (task.endDate && task.endDate === dateStr);
+    });
   };
-
-  React.useEffect(() => {
-    // Remove the initial scroll effect
-  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
