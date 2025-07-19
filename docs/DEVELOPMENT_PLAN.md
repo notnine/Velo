@@ -64,6 +64,7 @@ This document outlines the development strategy for the Velo MVP, focusing on au
   - [x] 2nd mic tap ends convo with LLM
 
 - [ ] **Conversation Turn Management**
+  - [ ] implement websockets to enable two-way fast communication between backend & openai, replacing http protocol
   - [ ] Send transcribed user input to LLM backend
   - [ ] Store conversation history in Redux for context
   - [ ] Receive and display LLM response
