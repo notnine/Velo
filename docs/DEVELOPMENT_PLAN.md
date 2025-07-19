@@ -53,15 +53,15 @@ This document outlines the development strategy for the Velo MVP, focusing on au
 - [x] Set up environment variables for API keys
 
 ### 4.2 Voice Conversation System
-- [ ] **UI & Entry Point**
+- [x] **UI & Entry Point**
   - [x] Remove text input from assistant/chat UI
   - [x] Add a single "Start Conversation" button to initiate voice mode
   - [x] Add visual indicators for listening, thinking, and speaking states
 
-- [ ] **Voice Input Integration**
+- [x] **Voice Input Integration**
   - [x] Integrate speech-to-text (STT) library
-  - [ ] Start listening for user speech on button tap
-  - [ ] Detect end of user speech and handle errors/timeouts
+  - [x] Start listening for user speech on button tap
+  - [x] 2nd mic tap ends convo with LLM
 
 - [ ] **Conversation Turn Management**
   - [ ] Send transcribed user input to LLM backend
@@ -92,7 +92,7 @@ This document outlines the development strategy for the Velo MVP, focusing on au
 
 ### 4.4 User Experience
 - [ ] **Minimal UI Interaction**
-  - [ ] Replace text input with voice button
+  - [x] Replace text input with voice button
   - [ ] Show conversation status and current task being created
   - [ ] Implement undo functionality for recent tasks
   - [ ] Add quick edit options for created tasks

@@ -272,7 +272,6 @@ export const Settings: React.FC = () => {
           ...editingBlockedHour.range,
           end: timeString
         };
-        // Removed validation - allow any time range
       }
 
       dispatch(updateBlockedHours({ index: editingBlockedHour.index, range: newRange }));
