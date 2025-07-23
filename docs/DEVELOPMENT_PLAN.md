@@ -63,30 +63,41 @@ This document outlines the development strategy for the Velo MVP, focusing on au
   - [x] Start listening for user speech on button tap
   - [x] 2nd mic tap ends convo with LLM
 
-- [ ] **Conversation Turn Management**
-    - [ ] Update LLM backend/system prompt to require confirmation before finalizing actions (e.g., requires_confirmation: true)
-    - [ ] Parse and buffer pending actions in the app when requires_confirmation is present
-    - [ ] Add TTS prompt: "Confirm?" when confirmation is required
-    - [ ] Capture user response ("yes"/"no") and send as next message in chat history
-    - [ ] On confirmation, send full chat history to backend/LLM and await final confirmation intent
-    - [ ] Detect confirmed intent (e.g., confirmed: true) in LLM response
-    - [ ] Execute calendar action only after confirmed intent is received
-    - [ ] Handle user rejection ("no") by cancelling pending action and informing user
-    - [ ] Detect scheduling conflicts before confirming an event: if conflict detected, inform user and prompt for alternative or reschedule**
-    - [ ] Test full multi-turn flow: propose → confirm → execute/cancel
+- [ ] **Voice End-of-Speech Detection**
+    - [x] Use react-native-voice to start listening when mic button is tapped
+    - [x] Listen for onSpeechEnd or onSpeechResults (final) event to detect when user is done speaking
+    - [x] On end of speech, stop listening and capture the final transcript
+    - [x] Dispatch the transcript to the LLM handler (sendMessage)
+    - [ ] Handle edge case: silence (no speech detected)
 
-- [ ] **Conversation End Detection**
-  - [ ] Detect end of conversation (LLM signals, user says stop phrase, or timeout)
-  - [ ] End voice mode and reset UI state
+- [ ] **Voice-Driven Conversation Flow (Chronological Steps)**
+    - [ ] Integrate speech-to-text (STT) for capturing user voice input (react-native-voice)
+    - [ ] Integrate text-to-speech (TTS) for app voice output (expo-speech)
+    - [ ] On mic tap, use STT to capture user request (e.g., "schedule dinner today at 7pm")
+    - [ ] Hardcode app logic to use TTS to ask for confirmation (e.g., "scheduling dinner today at 7pm, confirm?")
+    - [ ] After TTS, automatically start listening for user's voice reply
+    - [ ] If user says "confirm" or "yes", finalize the action (hardcoded)
+    - [ ] If user says "no" or provides a correction (e.g., "actually, make it 8pm"), app uses TTS to repeat new proposal (e.g., "scheduling dinner at 8pm, confirm?")
+    - [ ] Repeat TTS/STT loop until user confirms or cancels
+    - [ ] Handle edge cases: silence, user cancels, or errors (TTS feedback)
+    - [ ] Test: Full hands-free flow with hardcoded logic (no backend)
+    - [ ] Connect to LLM backend for dynamic responses
+    - [ ] Send full chat history to backend for context
+    - [ ] Parse LLM response for requires_confirmation and confirmed intent
+    - [ ] Use TTS to prompt for confirmation or corrections as needed
+    - [ ] On user correction, send new message to LLM and repeat TTS/STT loop
+    - [ ] Only execute action after LLM signals confirmed intent
+    - [ ] Handle scheduling conflicts: if conflict detected, inform user via TTS and prompt for alternative
+    - [ ] Test: Multi-turn, hands-free conversation with LLM
+    - [ ] Ensure LLM can handle user cancellation intent (e.g., user says "cancel" or "never mind")
+
 
 - [ ] **Backend & LLM Updates**
   - [ ] Update backend to handle conversational context and multi-turn flow
-  - [ ] Ensure LLM can signal end of conversation in its responses
 
 ### 4.3 Smart Task Creation
 - [ ] **Automated Scheduling**
   - [ ] LLM suggests optimal times based on calendar availability
-  - [ ] Implement smart defaults for common task types
   - [ ] Handle time conflicts and suggest alternatives
   - [ ] **LLM/app should warn about conflicts and offer to reschedule or pick a new time**
 
@@ -99,23 +110,10 @@ This document outlines the development strategy for the Velo MVP, focusing on au
 - [ ] **Minimal UI Interaction**
   - [x] Replace text input with voice button
   - [ ] Show conversation status and current task being created
+  - [ ] Use TTS for all confirmations and prompts
+  - [ ] No UI confirmation prompts; all confirmations are voice-driven
   - [ ] Implement undo functionality for recent tasks
-  - [ ] Add quick edit options for created tasks
 
-- [ ] **Smart Notifications**
-  - [ ] Show task creation confirmations
-  - [ ] Notify about scheduling conflicts
-  - [ ] Suggest task modifications based on calendar changes
-
-## Phase 5: Advanced Automation (Future)
-### 5.1 Passive Task Creation
-- [ ] Monitor calendar events and suggest related tasks
-- [ ] Auto-create tasks from email content
-- [ ] Location-based task suggestions
-
-### 5.2 Learning and Optimization
-- [ ] LLM learns user preferences over time
-- [ ] Optimize scheduling based on user patterns
 - [ ] Reduce conversation frequency as system learns
 
 ## Testing Strategy

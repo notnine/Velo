@@ -104,7 +104,8 @@ SUGGESTION: [
             "title": "Task title",
             "description": "Task description",
             "start_date": "2024-03-20T14:00:00",
-            "end_date": "2024-03-20T15:00:00"
+            "end_date": "2024-03-20T15:00:00",
+            "requires_confirmation": true
         }
     },
     ...
@@ -112,6 +113,10 @@ SUGGESTION: [
 
 Guidelines:
 - For every scheduled task, always provide both start_date and end_date in ISO 8601 format.
+- Always include a field "requires_confirmation": true in the parameters for any action that changes the user's schedule or tasks.
+- When proposing an action, summarize the details and explicitly ask the user for confirmation (e.g., "Shall I confirm this?").
+- Do not finalize or confirm any action until the user says "yes" or "confirm".
+- If the user says "no" or provides a correction, update the proposal and ask for confirmation again.
 - If the user requests splitting work over multiple days, return multiple create_task actions, each with its own start_date and end_date.
 - Do not use or mention 'due_date'.
 - Only include fields that are relevant for the user's request.
