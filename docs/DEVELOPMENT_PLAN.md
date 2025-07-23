@@ -64,13 +64,16 @@ This document outlines the development strategy for the Velo MVP, focusing on au
   - [x] 2nd mic tap ends convo with LLM
 
 - [ ] **Conversation Turn Management**
-  - [ ] implement websockets to enable two-way fast communication between backend & openai, replacing http protocol
-  - [ ] Send transcribed user input to LLM backend
-  - [ ] Store conversation history in Redux for context
-  - [ ] Receive and display LLM response
-  - [ ] Use text-to-speech (TTS) to play LLM response aloud
-  - [ ] Automatically resume listening for user's next response
-  - [ ] Alternate between listening and speaking until conversation ends
+    - [ ] Update LLM backend/system prompt to require confirmation before finalizing actions (e.g., requires_confirmation: true)
+    - [ ] Parse and buffer pending actions in the app when requires_confirmation is present
+    - [ ] Add TTS prompt: "Confirm?" when confirmation is required
+    - [ ] Capture user response ("yes"/"no") and send as next message in chat history
+    - [ ] On confirmation, send full chat history to backend/LLM and await final confirmation intent
+    - [ ] Detect confirmed intent (e.g., confirmed: true) in LLM response
+    - [ ] Execute calendar action only after confirmed intent is received
+    - [ ] Handle user rejection ("no") by cancelling pending action and informing user
+    - [ ] Detect scheduling conflicts before confirming an event: if conflict detected, inform user and prompt for alternative or reschedule**
+    - [ ] Test full multi-turn flow: propose → confirm → execute/cancel
 
 - [ ] **Conversation End Detection**
   - [ ] Detect end of conversation (LLM signals, user says stop phrase, or timeout)
@@ -85,6 +88,7 @@ This document outlines the development strategy for the Velo MVP, focusing on au
   - [ ] LLM suggests optimal times based on calendar availability
   - [ ] Implement smart defaults for common task types
   - [ ] Handle time conflicts and suggest alternatives
+  - [ ] **LLM/app should warn about conflicts and offer to reschedule or pick a new time**
 
 - [ ] **Task Management via Voice**
   - [ ] Voice commands for editing tasks: "change time to 3pm", "move to tomorrow"
