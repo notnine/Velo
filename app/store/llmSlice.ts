@@ -36,34 +36,48 @@ const initialState: LLMState = {
 export const sendMessage = createAsyncThunk(
   'llm/sendMessage',
   async ({ message, context }: { message: string; context: any }) => {
-    // Hardcoded sample LLM response for mini test
-    const response = {
-      response: "Okay, I’ll schedule Lunch with Sam tomorrow at 2 PM for 1 hour. Shall I confirm this?",
-      suggested_actions: [
-        {
-          action: "create_task",
-          parameters: {
-            title: "Lunch with Sam",
-            start_date: "2025-07-18T14:00:00",
-            end_date: "2025-07-18T15:00:00",
-            requires_confirmation: true,
-            description: "Lunch with Sam at 2 PM for 1 hour."
-          }
-        }
-      ]
-    };
-    console.log('[LLM] Returning response:', response);
-    if (response.suggested_actions && response.suggested_actions.some(a => a.parameters?.requires_confirmation)) {
-      console.log('[LLM] Response requires confirmation.');
+    console.log('[LLM] Sending message to backend:', message);
+    console.log('[LLM] Context:', context);
+    
+    try {
+      const response = await fetch('http://localhost:8000/api/llm/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message,
+          context,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('[LLM] Backend response:', data);
+      
+      if (data.suggested_actions && data.suggested_actions.some((a: LLMSuggestion) => a.parameters?.requires_confirmation)) {
+        console.log('[LLM] Response requires confirmation.');
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('[LLM] Backend request failed:', error);
+      throw error;
     }
-    return response;
   }
 );
 
 const llmSlice = createSlice({
   name: 'llm',
   initialState,
-  reducers: {},
+  reducers: {
+    clearLastResponse: (state) => {
+      state.lastResponse = null;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(sendMessage.pending, (state) => {
@@ -77,7 +91,7 @@ const llmSlice = createSlice({
           id: `${Date.now()}`,
           response: action.payload,
         });
-        if (action.payload.suggested_actions && action.payload.suggested_actions.some(a => a.parameters?.requires_confirmation)) {
+        if (action.payload.suggested_actions && action.payload.suggested_actions.some((a: LLMSuggestion) => a.parameters?.requires_confirmation)) {
           console.log('[LLM] Fulfilled: Confirmation required for suggested action.');
         } else {
           console.log('[LLM] Fulfilled: No confirmation required.');
@@ -91,3 +105,4 @@ const llmSlice = createSlice({
 });
 
 export default llmSlice.reducer;
+export const { clearLastResponse } = llmSlice.actions;

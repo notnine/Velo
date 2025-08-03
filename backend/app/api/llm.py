@@ -95,6 +95,9 @@ def create_chat_prompt(message: str, context: Optional[dict] = None) -> List[Dic
     """Create a structured prompt for the LLM."""
     system_prompt = """You are Velo's AI assistant, helping users manage their tasks and schedule.
 Your role is to understand task-related requests and provide clear, actionable responses.
+
+When the user confirms an action (says "yes", "confirm", "okay", etc.), execute the action immediately without asking for confirmation again.
+
 When suggesting actions, use the following format:
 
 SUGGESTION: [
@@ -117,6 +120,7 @@ Guidelines:
 - When proposing an action, summarize the details and explicitly ask the user for confirmation (e.g., "Shall I confirm this?").
 - Do not finalize or confirm any action until the user says "yes" or "confirm".
 - If the user says "no" or provides a correction, update the proposal and ask for confirmation again.
+- If the user confirms an action (says "yes", "confirm", "okay", etc.), execute the action and respond with a success message WITHOUT asking for confirmation again.
 - If the user requests splitting work over multiple days, return multiple create_task actions, each with its own start_date and end_date.
 - Do not use or mention 'due_date'.
 - Only include fields that are relevant for the user's request.
@@ -203,13 +207,31 @@ async def chat_with_llm(
         if "SUGGESTION:" in assistant_message:
             try:
                 suggestion_part = assistant_message.split("SUGGESTION:")[1].strip()
-                action_data = json.loads(suggestion_part)
-                if isinstance(action_data, list):
-                    suggested_actions = [TaskSuggestion(**action) for action in action_data]
+                # Find the end of the JSON array by looking for the closing bracket
+                bracket_count = 0
+                json_end = 0
+                for i, char in enumerate(suggestion_part):
+                    if char == '[':
+                        bracket_count += 1
+                    elif char == ']':
+                        bracket_count -= 1
+                        if bracket_count == 0:
+                            json_end = i + 1
+                            break
+                
+                if json_end > 0:
+                    json_str = suggestion_part[:json_end]
+                    action_data = json.loads(json_str)
+                    if isinstance(action_data, list):
+                        suggested_actions = [TaskSuggestion(**action) for action in action_data]
+                    else:
+                        suggested_actions = [TaskSuggestion(**action_data)]
+                    print(f"Successfully parsed {len(suggested_actions)} suggested actions")
                 else:
-                    suggested_actions = [TaskSuggestion(**action_data)]
+                    print("Could not find complete JSON array in suggestion")
             except (json.JSONDecodeError, ValueError) as e:
                 print(f"Failed to parse suggestions: {e}")
+                print(f"Raw suggestion part: {suggestion_part}")
         
         return LLMResponse(
             response=assistant_message,

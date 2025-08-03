@@ -13,8 +13,21 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { store } from './store';
 import { supabase } from '../lib/supabase';
 import { Session } from '@supabase/supabase-js';
-import { VoiceConversationProvider } from './lib/VoiceConversationContext';
-import FloatingMicButton from 'app/components/FloatingMicButton';
+import { VoiceConversationProvider, useVoiceConversation } from './lib/VoiceConversationContext';
+import { FloatingMicButton } from './components/FloatingMicButton';
+
+// Component to wrap FloatingMicButton with voice context
+function VoiceButton() {
+  const { conversationState, handleMicButton } = useVoiceConversation();
+  const isListening = conversationState === 'listening';
+  
+  return (
+    <FloatingMicButton 
+      onPress={handleMicButton}
+      isListening={isListening}
+    />
+  );
+}
 
 export default function RootLayout() {
   const [session, setSession] = useState<Session | null>(null);
@@ -63,7 +76,7 @@ export default function RootLayout() {
           <SafeAreaProvider>
             <VoiceConversationProvider>
               <Slot />
-              {!inAuthGroup && <FloatingMicButton />}
+              {!inAuthGroup && <VoiceButton />}
             </VoiceConversationProvider>
           </SafeAreaProvider>
         </PaperProvider>
