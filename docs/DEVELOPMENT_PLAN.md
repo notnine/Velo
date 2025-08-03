@@ -63,24 +63,27 @@ This document outlines the development strategy for the Velo MVP, focusing on au
   - [x] Start listening for user speech on button tap
   - [x] 2nd mic tap ends convo with LLM
 
-- [ ] **Voice End-of-Speech Detection**
+- [x] **Voice End-of-Speech Detection**
     - [x] Use react-native-voice to start listening when mic button is tapped
     - [x] Listen for onSpeechEnd or onSpeechResults (final) event to detect when user is done speaking
     - [x] On end of speech, stop listening and capture the final transcript
     - [x] Dispatch the transcript to the LLM handler (sendMessage)
-    - [ ] Handle edge case: silence (no speech detected)
+    - [x] Handle edge case: silence (no speech detected)
 
 - [ ] **Voice-Driven Conversation Flow (Chronological Steps)**
-    - [ ] Integrate speech-to-text (STT) for capturing user voice input (react-native-voice)
-    - [ ] Integrate text-to-speech (TTS) for app voice output (expo-speech)
+- [ ] **A: STT & TTS**
+    - [x] Integrate speech-to-text (STT) for capturing user voice input (react-native-voice)
+    - [x] Integrate text-to-speech (TTS) for app voice output (expo-speech)
     - [ ] On mic tap, use STT to capture user request (e.g., "schedule dinner today at 7pm")
     - [ ] Hardcode app logic to use TTS to ask for confirmation (e.g., "scheduling dinner today at 7pm, confirm?")
     - [ ] After TTS, automatically start listening for user's voice reply
     - [ ] If user says "confirm" or "yes", finalize the action (hardcoded)
     - [ ] If user says "no" or provides a correction (e.g., "actually, make it 8pm"), app uses TTS to repeat new proposal (e.g., "scheduling dinner at 8pm, confirm?")
     - [ ] Repeat TTS/STT loop until user confirms or cancels
+    - [ ] Ensure LLM can handle user cancellation intent (e.g., user says "cancel" or "never mind")
     - [ ] Handle edge cases: silence, user cancels, or errors (TTS feedback)
     - [ ] Test: Full hands-free flow with hardcoded logic (no backend)
+- [ ] **B: LLM Integration**
     - [ ] Connect to LLM backend for dynamic responses
     - [ ] Send full chat history to backend for context
     - [ ] Parse LLM response for requires_confirmation and confirmed intent
@@ -89,7 +92,6 @@ This document outlines the development strategy for the Velo MVP, focusing on au
     - [ ] Only execute action after LLM signals confirmed intent
     - [ ] Handle scheduling conflicts: if conflict detected, inform user via TTS and prompt for alternative
     - [ ] Test: Multi-turn, hands-free conversation with LLM
-    - [ ] Ensure LLM can handle user cancellation intent (e.g., user says "cancel" or "never mind")
 
 
 - [ ] **Backend & LLM Updates**

@@ -9,7 +9,14 @@ export default function FloatingMicButton() {
     conversationState,
     conversationEnded,
     handleMicButton,
+    speakToUser,
   } = useVoiceConversation();
+
+  // Test TTS function
+  const testTTS = async () => {
+    console.log('[FloatingMicButton] Testing TTS...');
+    await speakToUser("Hello! I'm Velo, your voice assistant. How can I help you today?");
+  };
 
   return (
     <View style={styles.fabContainer} pointerEvents="box-none">
@@ -32,6 +39,15 @@ export default function FloatingMicButton() {
         activeOpacity={0.7}
       >
         <MaterialCommunityIcons name="microphone" size={32} color="#fff" />
+      </TouchableOpacity>
+      
+      {/* Test TTS Button (temporary for testing) */}
+      <TouchableOpacity
+        style={[styles.fab, styles.testButton]}
+        onPress={testTTS}
+        activeOpacity={0.7}
+      >
+        <MaterialCommunityIcons name="volume-high" size={24} color="#fff" />
       </TouchableOpacity>
     </View>
   );
@@ -58,6 +74,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 6,
+    marginBottom: 8,
+  },
+  testButton: {
+    backgroundColor: '#007AFF',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
   },
   conversationIndicator: {
     marginBottom: 8,
