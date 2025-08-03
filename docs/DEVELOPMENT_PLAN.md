@@ -74,14 +74,14 @@ This document outlines the development strategy for the Velo MVP, focusing on au
 - [ ] **A: STT & TTS**
     - [x] Integrate speech-to-text (STT) for capturing user voice input (react-native-voice)
     - [x] Integrate text-to-speech (TTS) for app voice output (expo-speech)
-    - [ ] On mic tap, use STT to capture user request (e.g., "schedule dinner today at 7pm")
-    - [ ] Hardcode app logic to use TTS to ask for confirmation (e.g., "scheduling dinner today at 7pm, confirm?")
-    - [ ] After TTS, automatically start listening for user's voice reply
-    - [ ] If user says "confirm" or "yes", finalize the action (hardcoded)
-    - [ ] If user says "no" or provides a correction (e.g., "actually, make it 8pm"), app uses TTS to repeat new proposal (e.g., "scheduling dinner at 8pm, confirm?")
-    - [ ] Repeat TTS/STT loop until user confirms or cancels
-    - [ ] Ensure LLM can handle user cancellation intent (e.g., user says "cancel" or "never mind")
-    - [ ] Handle edge cases: silence, user cancels, or errors (TTS feedback)
+    - [x] On mic tap, use STT to capture user request (e.g., "schedule dinner today at 7pm")
+    - [x] Hardcode app logic to use TTS to ask for confirmation (e.g., "scheduling dinner today at 7pm, confirm?")
+    - [x] After TTS, automatically start listening for user's voice reply
+    - [x] If user says "confirm" or "yes", finalize the action (hardcoded)
+    - [x] If user says "no" or provides a correction (e.g., "actually, make it 8pm"), app uses TTS to repeat new proposal (e.g., "scheduling dinner at 8pm, confirm?")
+    - [x] Repeat TTS/STT loop until user confirms or cancels
+    - [x] Ensure LLM can handle user cancellation intent (e.g., user says "cancel" or "never mind")
+    - [x] Handle edge cases: silence, user cancels, or errors (TTS feedback)
     - [ ] Test: Full hands-free flow with hardcoded logic (no backend)
 - [ ] **B: LLM Integration**
     - [ ] Connect to LLM backend for dynamic responses
