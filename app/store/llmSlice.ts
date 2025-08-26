@@ -39,6 +39,10 @@ export const sendMessage = createAsyncThunk(
     console.log('[LLM] Sending message to backend:', message);
     console.log('[LLM] Context:', context);
     
+    // Debug: Print current date for comparison
+    const now = new Date();
+    console.log('[LLM] Frontend current date:', now.toISOString().split('T')[0]);
+    
     try {
       const response = await fetch('http://localhost:8000/api/llm/chat', {
         method: 'POST',

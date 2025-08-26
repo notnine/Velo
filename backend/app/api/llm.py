@@ -94,9 +94,13 @@ class LLMResponse(BaseModel):
 def create_chat_prompt(message: str, context: Optional[dict] = None) -> List[Dict]:
     """Create a structured prompt for the LLM."""
     # Get current date and time dynamically for each request
-    now = datetime.now()
+    # Use UTC to avoid timezone issues
+    now = datetime.utcnow()
     today = now.strftime("%Y-%m-%d")
     tomorrow = (now + timedelta(days=1)).strftime("%Y-%m-%d")
+    
+    # Debug: Print the current date context
+    print(f"[LLM] Current date context - Today: {today}, Tomorrow: {tomorrow}, Now: {now} (UTC)")
     
     # Build enhanced context with calendar data
     enhanced_context = {
@@ -112,9 +116,12 @@ def create_chat_prompt(message: str, context: Optional[dict] = None) -> List[Dic
 Your role is to understand task-related requests and provide clear, actionable responses.
 
 CURRENT DATE CONTEXT:
-- Today is {today}
-- Tomorrow is {tomorrow}
+- Today is {today} (YYYY-MM-DD format)
+- Tomorrow is {tomorrow} (YYYY-MM-DD format)
 - Current time is {now.strftime("%H:%M")}
+
+IMPORTANT: When the user says "today", ALWAYS use {today} as the date.
+When the user says "tomorrow", ALWAYS use {tomorrow} as the date.
 
 Execute actions immediately when the user makes a request. Do not ask for confirmation.
 
@@ -132,6 +139,8 @@ SUGGESTION: [
     }},
     ...
 ]
+
+Note: Always use the exact date from the CURRENT DATE CONTEXT above. Do not use any other dates.
 
 Guidelines:
 - For every scheduled task, always provide both start_date and end_date in ISO 8601 format.
