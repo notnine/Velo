@@ -13,14 +13,28 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { store } from './store';
 import { supabase } from '../lib/supabase';
 import { Session } from '@supabase/supabase-js';
-import { VoiceConversationProvider } from './lib/VoiceConversationContext';
-import FloatingMicButton from 'app/components/FloatingMicButton';
+import { VoiceConversationProvider, useVoiceConversation } from './lib/VoiceConversationContext';
+import { FloatingMicButton } from './components/FloatingMicButton';
+
+// Component to wrap FloatingMicButton with voice context
+function VoiceButton() {
+  const { conversationState, handleMicButton } = useVoiceConversation();
+  const isListening = conversationState === 'listening';
+  
+  return (
+    <FloatingMicButton 
+      onPress={handleMicButton}
+      isListening={isListening}
+    />
+  );
+}
 
 export default function RootLayout() {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const segments = useSegments();
   const router = useRouter();
+  const inAuthGroup = segments[0] === '(auth)';
 
   useEffect(() => {
     // Check for existing session
@@ -42,7 +56,6 @@ export default function RootLayout() {
   useEffect(() => {
     if (isLoading) return; // Don't navigate while loading
     
-    const inAuthGroup = segments[0] === '(auth)';
     console.log('Current route:', segments.join('/'));
     console.log('In auth group:', inAuthGroup);
     console.log('Has session:', !!session);
@@ -63,7 +76,7 @@ export default function RootLayout() {
           <SafeAreaProvider>
             <VoiceConversationProvider>
               <Slot />
-              <FloatingMicButton />
+              {!inAuthGroup && <VoiceButton />}
             </VoiceConversationProvider>
           </SafeAreaProvider>
         </PaperProvider>

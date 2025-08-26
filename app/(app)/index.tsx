@@ -45,7 +45,8 @@ export default function TasksScreen() {
     return tasks
       .filter(task => {
         if (!task.scheduledDate) return false;
-        return task.scheduledDate.startsWith(today);
+        // Show task if it starts today OR ends today (overnight task)
+        return task.scheduledDate === today || (task.endDate && task.endDate === today);
       })
       .sort((a, b) => {
         // Sort by start time if available, otherwise keep original order
@@ -88,8 +89,8 @@ export default function TasksScreen() {
   };
 
   const handleModalDismiss = () => {
-    setIsModalVisible(false);
     setEditingTask(undefined);
+    setIsModalVisible(false);
   };
 
   const handleToggleTask = (id: string) => {
@@ -140,12 +141,14 @@ export default function TasksScreen() {
         )}
       />
 
-      <AddTaskModal
-        visible={isModalVisible}
-        onDismiss={handleModalDismiss}
-        onSubmit={handleAddTask}
-        editTask={editingTask}
-      />
+      {/* Only render AddTaskModal when isModalVisible is true */}
+      {isModalVisible && (
+        <AddTaskModal
+          onDismiss={handleModalDismiss}
+          onSubmit={handleAddTask}
+          editTask={editingTask}
+        />
+      )}
     </SafeAreaView>
   );
 }

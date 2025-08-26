@@ -21,7 +21,8 @@ export interface Task {
   description: string;
   completed: boolean;
   createdAt: string;
-  scheduledDate: string | null; // ISO string format
+  scheduledDate: string | null; // ISO string format - start date
+  endDate: string | null; // ISO string format - end date for overnight tasks
   startTime: string | null; // Format: "1:00PM"
   endTime: string | null; // Format: "2:00PM"
 }
@@ -56,6 +57,7 @@ export const taskSlice = createSlice({
         completed: false,
         createdAt: new Date().toISOString(),
         scheduledDate: startDate.toISOString().split('T')[0],
+        endDate: endDate.toISOString().split('T')[0],
         startTime: startDate.toLocaleTimeString('en-US', {
           hour: 'numeric',
           minute: '2-digit',
@@ -111,6 +113,7 @@ export const taskSlice = createSlice({
         task.title = title;
         task.description = description;
         task.scheduledDate = startDate.toISOString().split('T')[0];
+        task.endDate = endDate.toISOString().split('T')[0];
         task.startTime = startDate.toLocaleTimeString('en-US', {
           hour: 'numeric',
           minute: '2-digit',
