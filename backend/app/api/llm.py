@@ -39,7 +39,7 @@ Dependencies:
     - FastAPI for API routing
     - Pydantic for request/response validation
 """
-from datetime import datetime
+from datetime import datetime, timedelta
 from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel
 from typing import Optional, List, Dict
@@ -93,34 +93,57 @@ class LLMResponse(BaseModel):
 
 def create_chat_prompt(message: str, context: Optional[dict] = None) -> List[Dict]:
     """Create a structured prompt for the LLM."""
-    system_prompt = """You are Velo's AI assistant, helping users manage their tasks and schedule.
+    # Get current date and time dynamically for each request
+    now = datetime.now()
+    today = now.strftime("%Y-%m-%d")
+    tomorrow = (now + timedelta(days=1)).strftime("%Y-%m-%d")
+    
+    # Build enhanced context with calendar data
+    enhanced_context = {
+        "current_date": today,
+        "current_time": now.strftime("%H:%M"),
+        "tomorrow_date": tomorrow,
+        "user_calendar": context.get("calendarEvents", []) if context else [],
+        "user_tasks": context.get("currentTasks", []) if context else [],
+        "chat_history": context.get("chatHistory", []) if context else []
+    }
+    
+    system_prompt = f"""You are Velo's AI assistant, helping users manage their tasks and schedule.
 Your role is to understand task-related requests and provide clear, actionable responses.
 
-When the user confirms an action (says "yes", "confirm", "okay", etc.), execute the action immediately without asking for confirmation again.
+CURRENT DATE CONTEXT:
+- Today is {today}
+- Tomorrow is {tomorrow}
+- Current time is {now.strftime("%H:%M")}
+
+Execute actions immediately when the user makes a request. Do not ask for confirmation.
 
 When suggesting actions, use the following format:
 
 SUGGESTION: [
-    {
+    {{
         "action": "create_task",
-        "parameters": {
+        "parameters": {{
             "title": "Task title",
             "description": "Task description",
-            "start_date": "2024-03-20T14:00:00",
-            "end_date": "2024-03-20T15:00:00",
-            "requires_confirmation": true
-        }
-    },
+            "start_date": "{today}T14:00:00",
+            "end_date": "{today}T15:00:00"
+        }}
+    }},
     ...
 ]
 
 Guidelines:
 - For every scheduled task, always provide both start_date and end_date in ISO 8601 format.
-- Always include a field "requires_confirmation": true in the parameters for any action that changes the user's schedule or tasks.
-- When proposing an action, summarize the details and explicitly ask the user for confirmation (e.g., "Shall I confirm this?").
-- Do not finalize or confirm any action until the user says "yes" or "confirm".
-- If the user says "no" or provides a correction, update the proposal and ask for confirmation again.
-- If the user confirms an action (says "yes", "confirm", "okay", etc.), execute the action and respond with a success message WITHOUT asking for confirmation again.
+- ALWAYS use the current date context provided above.
+- Use today's date when the user doesn't specify a date.
+- For "tonight" or "this evening", use today's date with evening hours (18:00-22:00).
+- For "tomorrow", use tomorrow's date.
+- Consider the user's existing calendar events and tasks when scheduling.
+- Avoid scheduling conflicts with existing events.
+- Execute actions immediately without asking for confirmation.
+- Provide a brief description of what you're doing (e.g., "Scheduling dinner at 7 PM").
+- If the user provides a correction, update the action and execute immediately.
 - If the user requests splitting work over multiple days, return multiple create_task actions, each with its own start_date and end_date.
 - Do not use or mention 'due_date'.
 - Only include fields that are relevant for the user's request.
@@ -138,9 +161,9 @@ Available actions:
         {"role": "user", "content": message}
     ]
     
-    if context:
-        context_str = f"\nContext: {json.dumps(context)}"
-        messages[1]["content"] += context_str
+    # Add enhanced context to the user message
+    context_str = f"\n\nUSER CONTEXT:\n{json.dumps(enhanced_context, indent=2)}"
+    messages[1]["content"] += context_str
     
     return messages
 
