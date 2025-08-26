@@ -26,6 +26,14 @@ const MONTHS = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
+// Helper function to format date in local timezone (avoids UTC conversion issues)
+const formatLocalDateString = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 interface MonthData {
   year: number;
   month: number;
@@ -189,7 +197,7 @@ export default function CalendarScreen() {
 
   const getTasksForDate = (date: Date) => {
     if (!date) return [];
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = formatLocalDateString(date);
     return tasks.filter(task => {
       // Show task if it starts on this date OR ends on this date (overnight task)
       return task.scheduledDate === dateStr || (task.endDate && task.endDate === dateStr);

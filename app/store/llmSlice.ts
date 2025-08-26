@@ -33,6 +33,14 @@ const initialState: LLMState = {
   messages: [],
 };
 
+// Helper function to format date in local timezone (avoids UTC conversion issues)
+const formatLocalDateString = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export const sendMessage = createAsyncThunk(
   'llm/sendMessage',
   async ({ message, context }: { message: string; context: any }) => {
@@ -41,7 +49,7 @@ export const sendMessage = createAsyncThunk(
     
     // Debug: Print current date for comparison
     const now = new Date();
-    console.log('[LLM] Frontend current date:', now.toISOString().split('T')[0]);
+    console.log('[LLM] Frontend current date:', formatLocalDateString(now));
     
     try {
       const response = await fetch('http://localhost:8000/api/llm/chat', {
