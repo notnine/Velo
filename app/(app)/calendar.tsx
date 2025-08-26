@@ -2,7 +2,7 @@
  * Calendar screen that will show tasks organized by date. This screen helps users
  * view and manage their scheduled tasks in a calendar format.
  */
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -117,6 +117,7 @@ export default function CalendarScreen() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isDayDetailVisible, setIsDayDetailVisible] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
+  const currentMonthRef = useRef<View>(null);
   const theme = useTheme();
   const dispatch = useDispatch();
 
@@ -194,6 +195,20 @@ export default function CalendarScreen() {
     });
   };
 
+  // Scroll to current month title directly
+  useEffect(() => {
+    setTimeout(() => {
+      if (currentMonthRef.current) {
+        currentMonthRef.current.measureInWindow((x, y, width, height) => {
+          scrollViewRef.current?.scrollTo({
+            y: y - 110, // Offset for header space
+            animated: false
+          });
+        });
+      }
+    }, 100);
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -220,17 +235,16 @@ export default function CalendarScreen() {
         ref={scrollViewRef}
         showsVerticalScrollIndicator={false}
         onScroll={(e) => {
-          const offset = e.nativeEvent.contentOffset.y;
-          const monthHeight = Dimensions.get('window').width + 50;
-          const currentMonthIndex = Math.floor(offset / monthHeight);
-          if (currentMonthIndex >= 0 && currentMonthIndex < monthsData.length) {
-            setCurrentYear(monthsData[currentMonthIndex].year);
-          }
+          // Simple scroll handler - year will be updated when needed
         }}
         scrollEventThrottle={16}
       >
         {monthsData.map((monthData, monthIndex) => (
-          <View key={monthIndex} style={styles.month}>
+          <View 
+            key={monthIndex} 
+            style={styles.month}
+            ref={monthIndex === 12 ? currentMonthRef : undefined}
+          >
             <Text style={styles.monthTitle}>
               {MONTHS[monthData.month]}
             </Text>
