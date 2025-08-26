@@ -126,6 +126,9 @@ export const taskSlice = createSlice({
         }).replace(/\s+/g, '');
       }
     },
+    clearAllTasks: (state) => {
+      state.items = [];
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -145,5 +148,5 @@ export const taskSlice = createSlice({
   },
 });
 
-export const { addTask, updateTaskSchedule, updateTaskTime, toggleTask, deleteTask, updateTask } = taskSlice.actions;
+export const { addTask, updateTaskSchedule, updateTaskTime, toggleTask, deleteTask, updateTask, clearAllTasks } = taskSlice.actions;
 export default taskSlice.reducer; 

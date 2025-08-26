@@ -110,6 +110,15 @@ Result: Task appears in calendar immediately ✅
 
 ---
 
+## 🧪 **DEVELOP BUILD**
+
+### **Clear All Tasks Feature**:
+- [ ] **Add clearAllTasks Redux action**: Create action in taskSlice.ts that clears all tasks from state
+- [ ] **Add clear button to Settings**: Add button in Settings.tsx that dispatches clearAllTasks with confirmation
+- [ ] **Test clear functionality**: Verify button successfully removes all tasks from app
+
+---
+
 ## 🔧 **USER EXPERIENCE IMPROVEMENTS**
 
 ### **Remove Confirmation Requirement**:
