@@ -142,7 +142,7 @@ Result: Task appears in calendar immediately ✅
 
 ### **Fix Calendar Bugs**:
 - [x] **Fix Calendar Initial Date**: Ensure calendar starts on current month/year instead of 2024
-- [ ] **Fix Year Display Bug**: Fix year showing 2025 when scrolling to 2024 months
+- [x] **Fix Year Display Bug**: Fix year showing 2025 when scrolling to 2024 months
 - [ ] **Fix Task Date Offset**: Fix tasks showing on wrong date (day after scheduled date)
 - [ ] **Align with iOS Calendar**: Ensure calendar behavior matches iOS calendar standards
 - [ ] **Test Calendar Navigation**: Verify scrolling and date display work correctly
