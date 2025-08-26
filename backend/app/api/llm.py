@@ -39,7 +39,7 @@ Dependencies:
     - FastAPI for API routing
     - Pydantic for request/response validation
 """
-from datetime import datetime
+from datetime import datetime, timedelta
 from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel
 from typing import Optional, List, Dict
@@ -93,25 +93,57 @@ class LLMResponse(BaseModel):
 
 def create_chat_prompt(message: str, context: Optional[dict] = None) -> List[Dict]:
     """Create a structured prompt for the LLM."""
-    system_prompt = """You are Velo's AI assistant, helping users manage their tasks and schedule.
+    # Get current date and time dynamically for each request
+    now = datetime.now()
+    today = now.strftime("%Y-%m-%d")
+    tomorrow = (now + timedelta(days=1)).strftime("%Y-%m-%d")
+    
+    # Build enhanced context with calendar data
+    enhanced_context = {
+        "current_date": today,
+        "current_time": now.strftime("%H:%M"),
+        "tomorrow_date": tomorrow,
+        "user_calendar": context.get("calendarEvents", []) if context else [],
+        "user_tasks": context.get("currentTasks", []) if context else [],
+        "chat_history": context.get("chatHistory", []) if context else []
+    }
+    
+    system_prompt = f"""You are Velo's AI assistant, helping users manage their tasks and schedule.
 Your role is to understand task-related requests and provide clear, actionable responses.
+
+CURRENT DATE CONTEXT:
+- Today is {today}
+- Tomorrow is {tomorrow}
+- Current time is {now.strftime("%H:%M")}
+
+Execute actions immediately when the user makes a request. Do not ask for confirmation.
+
 When suggesting actions, use the following format:
 
 SUGGESTION: [
-    {
+    {{
         "action": "create_task",
-        "parameters": {
+        "parameters": {{
             "title": "Task title",
             "description": "Task description",
-            "start_date": "2024-03-20T14:00:00",
-            "end_date": "2024-03-20T15:00:00"
-        }
-    },
+            "start_date": "{today}T14:00:00",
+            "end_date": "{today}T15:00:00"
+        }}
+    }},
     ...
 ]
 
 Guidelines:
 - For every scheduled task, always provide both start_date and end_date in ISO 8601 format.
+- ALWAYS use the current date context provided above.
+- Use today's date when the user doesn't specify a date.
+- For "tonight" or "this evening", use today's date with evening hours (18:00-22:00).
+- For "tomorrow", use tomorrow's date.
+- Consider the user's existing calendar events and tasks when scheduling.
+- Avoid scheduling conflicts with existing events.
+- Execute actions immediately without asking for confirmation.
+- Provide a brief description of what you're doing (e.g., "Scheduling dinner at 7 PM").
+- If the user provides a correction, update the action and execute immediately.
 - If the user requests splitting work over multiple days, return multiple create_task actions, each with its own start_date and end_date.
 - Do not use or mention 'due_date'.
 - Only include fields that are relevant for the user's request.
@@ -129,9 +161,9 @@ Available actions:
         {"role": "user", "content": message}
     ]
     
-    if context:
-        context_str = f"\nContext: {json.dumps(context)}"
-        messages[1]["content"] += context_str
+    # Add enhanced context to the user message
+    context_str = f"\n\nUSER CONTEXT:\n{json.dumps(enhanced_context, indent=2)}"
+    messages[1]["content"] += context_str
     
     return messages
 
@@ -198,13 +230,31 @@ async def chat_with_llm(
         if "SUGGESTION:" in assistant_message:
             try:
                 suggestion_part = assistant_message.split("SUGGESTION:")[1].strip()
-                action_data = json.loads(suggestion_part)
-                if isinstance(action_data, list):
-                    suggested_actions = [TaskSuggestion(**action) for action in action_data]
+                # Find the end of the JSON array by looking for the closing bracket
+                bracket_count = 0
+                json_end = 0
+                for i, char in enumerate(suggestion_part):
+                    if char == '[':
+                        bracket_count += 1
+                    elif char == ']':
+                        bracket_count -= 1
+                        if bracket_count == 0:
+                            json_end = i + 1
+                            break
+                
+                if json_end > 0:
+                    json_str = suggestion_part[:json_end]
+                    action_data = json.loads(json_str)
+                    if isinstance(action_data, list):
+                        suggested_actions = [TaskSuggestion(**action) for action in action_data]
+                    else:
+                        suggested_actions = [TaskSuggestion(**action_data)]
+                    print(f"Successfully parsed {len(suggested_actions)} suggested actions")
                 else:
-                    suggested_actions = [TaskSuggestion(**action_data)]
+                    print("Could not find complete JSON array in suggestion")
             except (json.JSONDecodeError, ValueError) as e:
                 print(f"Failed to parse suggestions: {e}")
+                print(f"Raw suggestion part: {suggestion_part}")
         
         return LLMResponse(
             response=assistant_message,
