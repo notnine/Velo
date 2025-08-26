@@ -118,16 +118,17 @@ export default function CalendarScreen() {
   const [isDayDetailVisible, setIsDayDetailVisible] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const currentMonthRef = useRef<View>(null);
+  const monthRefs = useRef<(View | null)[]>(Array(25).fill(null));
   const theme = useTheme();
   const dispatch = useDispatch();
 
-  // Generate 24 months: 12 months before current month + current month + 11 months after
+  // Generate 25 months: 12 months before current month + current month + 12 months after
   const today = new Date();
   const currentMonth = today.getMonth();
   const baseYear = today.getFullYear();
 
   const monthsData: MonthData[] = [];
-  for (let i = -12; i < 12; i++) {
+  for (let i = -12; i <= 12; i++) {
     let month = currentMonth + i;
     let year = baseYear;
     
@@ -235,7 +236,21 @@ export default function CalendarScreen() {
         ref={scrollViewRef}
         showsVerticalScrollIndicator={false}
         onScroll={(e) => {
-          // Simple scroll handler - year will be updated when needed
+          const scrollY = e.nativeEvent.contentOffset.y;
+          
+          // Each month is roughly: title (40px) + 6 weeks * 80px + margin (24px) = ~544px
+          const estimatedMonthHeight = 544;
+          const currentMonthIndex = Math.round(scrollY / estimatedMonthHeight);
+          
+          if (currentMonthIndex >= 0 && currentMonthIndex < monthsData.length) {
+            const visibleMonth = monthsData[currentMonthIndex];
+            console.log(`Scroll ${scrollY}px -> month index ${currentMonthIndex}: ${MONTHS[visibleMonth.month]} ${visibleMonth.year}`);
+            
+            if (visibleMonth && visibleMonth.year !== currentYear) {
+              console.log(`Updating year from ${currentYear} to ${visibleMonth.year}`);
+              setCurrentYear(visibleMonth.year);
+            }
+          }
         }}
         scrollEventThrottle={16}
       >
