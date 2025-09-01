@@ -29,12 +29,12 @@ export default function DayDetailView({
   month,
 }: DayDetailViewProps) {
   const formatHeaderDate = () => {
-    return date.toLocaleDateString('en-US', {
-      weekday: 'long',
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
+    const weekday = date.toLocaleDateString('en-US', { weekday: 'long' });
+    const month = date.toLocaleDateString('en-US', { month: 'long' });
+    const day = date.getDate();
+    const year = date.getFullYear();
+    
+    return `${weekday} — ${month} ${day}, ${year}`;
   };
 
   const getTasksForHour = (hour: number) => {
@@ -56,17 +56,20 @@ export default function DayDetailView({
       >
         <View style={styles.container}>
           <View style={styles.header}>
-            <TouchableOpacity onPress={onDismiss} style={styles.backButton}>
-              <IconButton
-                icon="chevron-left"
-                size={24}
-                iconColor="#FF3B30"
-                style={styles.backIcon}
-              />
-              <Text style={styles.monthText}>{month}</Text>
-            </TouchableOpacity>
-            <Text style={styles.headerDate}>{formatHeaderDate()}</Text>
-            <View style={styles.headerRight} />
+            <View style={styles.headerTop}>
+              <Text style={styles.headerDate}>{formatHeaderDate()}</Text>
+            </View>
+            <View style={styles.headerBottom}>
+              <TouchableOpacity onPress={onDismiss} style={styles.backButton}>
+                <IconButton
+                  icon="chevron-left"
+                  size={24}
+                  iconColor="#FF3B30"
+                  style={styles.backIcon}
+                />
+                <Text style={styles.monthText}>{month}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           <ScrollView 
@@ -130,14 +133,19 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E5EA',
     backgroundColor: 'white',
+  },
+  headerTop: {
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  headerBottom: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   backButton: {
     width: 100,
@@ -154,10 +162,9 @@ const styles = StyleSheet.create({
     marginLeft: -8,
   },
   headerDate: {
-    fontSize: 17,
-    fontWeight: '400',
+    fontSize: 18,
+    fontWeight: '600',
     color: '#000',
-    flex: 1,
     textAlign: 'center',
   },
   headerRight: {

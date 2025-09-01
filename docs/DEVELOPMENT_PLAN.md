@@ -147,10 +147,19 @@ Result: Task appears in calendar immediately ✅
 
 ---
 
-### **Calendar Animations and Design**:
-- [ ] **Align with iOS Calendar**: Ensure calendar behavior matches iOS calendar standards
+### **Calendar View Animations and Design**:
+- [ ] **Day View**: the month and date clutter the top of the sreen, the date should be centered, and in a new row above the month
+- [ ] **Slide up transition**: When a date is clicked on the calendar, the DayDetailView should slide up from the bottom of the screen
+- [ ] **Slide down transition**: When the back button is clicked on the DayDetailView, the view should slide down from the top of the screen
+- [ ] **Sliding transition**: When the user is in the DayDetailView, and they scroll left/right, the view should slide left/right to show the next/previous day
 - [ ] **Test Calendar Navigation**: Verify scrolling and date display work correctly
 
+---
+
+### **Bottom Nav Bar**:
+- [ ] **Mic button covers settings button**: The mic button should be a part of the bottom nav bar, to the right of the settings button, instead of a floating button. ensure functionality is not affected
+
+---
 
 ## 🎯 **CURRENT FOCUS**
 
