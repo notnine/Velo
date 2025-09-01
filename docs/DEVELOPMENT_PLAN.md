@@ -110,6 +110,15 @@ Result: Task appears in calendar immediately ✅
 
 ---
 
+## 🧪 **DEVELOP BUILD**
+
+### **Clear All Tasks Feature**:
+- [X] **Add clearAllTasks Redux action**: Create action in taskSlice.ts that clears all tasks from state
+- [x] **Add clear button to Settings**: Add button in Settings.tsx that dispatches clearAllTasks with confirmation
+- [x] **Test clear functionality**: Verify button successfully removes all tasks from app
+
+---
+
 ## 🔧 **USER EXPERIENCE IMPROVEMENTS**
 
 ### **Remove Confirmation Requirement**:
@@ -132,8 +141,8 @@ Result: Task appears in calendar immediately ✅
 ---
 
 ### **Fix Calendar Bugs**:
-- [ ] **Fix Calendar Initial Date**: Ensure calendar starts on current month/year instead of 2024
-- [ ] **Fix Year Display Bug**: Fix year showing 2025 when scrolling to 2024 months
+- [x] **Fix Calendar Initial Date**: Ensure calendar starts on current month/year instead of 2024
+- [x] **Fix Year Display Bug**: Fix year showing 2025 when scrolling to 2024 months
 - [ ] **Fix Task Date Offset**: Fix tasks showing on wrong date (day after scheduled date)
 - [ ] **Align with iOS Calendar**: Ensure calendar behavior matches iOS calendar standards
 - [ ] **Test Calendar Navigation**: Verify scrolling and date display work correctly

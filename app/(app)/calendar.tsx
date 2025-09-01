@@ -2,7 +2,7 @@
  * Calendar screen that will show tasks organized by date. This screen helps users
  * view and manage their scheduled tasks in a calendar format.
  */
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -14,7 +14,7 @@ import { Text, IconButton, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
-import { Task, addTask, deleteTask } from '../store/taskSlice';
+import { Task, addTask, deleteTask, updateTask } from '../store/taskSlice';
 import AddTaskModal from '../../components/AddTaskModal';
 import TaskDetailsModal from '../../components/TaskDetailsModal';
 import DayDetailView from '../../components/DayDetailView';
@@ -25,6 +25,14 @@ const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
+
+// Helper function to format date in local timezone (avoids UTC conversion issues)
+const formatLocalDateString = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 interface MonthData {
   year: number;
@@ -63,6 +71,12 @@ const getMonthData = (year: number, month: number, tasks: Task[]): MonthData => 
       // Also show task on end date if it's different (overnight task)
       if (task.endDate && task.endDate === dateStr) return true;
       return false;
+    }).sort((a, b) => {
+      // Sort by start time if available, otherwise keep original order
+      if (!a.startTime && !b.startTime) return 0;
+      if (!a.startTime) return 1;
+      if (!b.startTime) return -1;
+      return a.startTime.localeCompare(b.startTime);
     });
     days.push({
       date,
@@ -117,16 +131,18 @@ export default function CalendarScreen() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isDayDetailVisible, setIsDayDetailVisible] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
+  const currentMonthRef = useRef<View>(null);
+  const monthRefs = useRef<(View | null)[]>(Array(25).fill(null));
   const theme = useTheme();
   const dispatch = useDispatch();
 
-  // Generate 24 months: 12 months before current month + current month + 11 months after
+  // Generate 25 months: 12 months before current month + current month + 12 months after
   const today = new Date();
   const currentMonth = today.getMonth();
   const baseYear = today.getFullYear();
 
   const monthsData: MonthData[] = [];
-  for (let i = -12; i < 12; i++) {
+  for (let i = -12; i <= 12; i++) {
     let month = currentMonth + i;
     let year = baseYear;
     
@@ -143,20 +159,31 @@ export default function CalendarScreen() {
     monthsData.push(getMonthData(year, month, tasks));
   }
 
-  const isToday = (date: number, monthData: MonthData) => {
+  const isToday = (date: number, monthData: MonthData, isCurrentMonth: boolean) => {
     const today = new Date();
     return date === today.getDate() && 
            monthData.month === today.getMonth() && 
-           monthData.year === today.getFullYear();
+           monthData.year === today.getFullYear() &&
+           isCurrentMonth; // Only highlight if it's actually in the current month
   };
 
   const handleSubmit = (title: string, description: string, startDate: Date, endDate: Date) => {
-    dispatch(addTask({
-      title,
-      description,
-      startDate,
-      endDate,
-    }));
+    if (selectedTask) {
+      dispatch(updateTask({
+        id: selectedTask.id,
+        title,
+        description,
+        startDate,
+        endDate,
+      }));
+    } else {
+      dispatch(addTask({
+        title,
+        description,
+        startDate,
+        endDate,
+      }));
+    }
     setIsAddModalVisible(false);
   };
 
@@ -187,12 +214,26 @@ export default function CalendarScreen() {
 
   const getTasksForDate = (date: Date) => {
     if (!date) return [];
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = formatLocalDateString(date);
     return tasks.filter(task => {
       // Show task if it starts on this date OR ends on this date (overnight task)
       return task.scheduledDate === dateStr || (task.endDate && task.endDate === dateStr);
     });
   };
+
+  // Scroll to current month title directly
+  useEffect(() => {
+    setTimeout(() => {
+      if (currentMonthRef.current) {
+        currentMonthRef.current.measureInWindow((x, y, width, height) => {
+          scrollViewRef.current?.scrollTo({
+            y: y - 110, // Offset for header space
+            animated: false
+          });
+        });
+      }
+    }, 100);
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -220,17 +261,30 @@ export default function CalendarScreen() {
         ref={scrollViewRef}
         showsVerticalScrollIndicator={false}
         onScroll={(e) => {
-          const offset = e.nativeEvent.contentOffset.y;
-          const monthHeight = Dimensions.get('window').width + 50;
-          const currentMonthIndex = Math.floor(offset / monthHeight);
+          const scrollY = e.nativeEvent.contentOffset.y;
+          
+          // Each month is roughly: title (40px) + 6 weeks * 80px + margin (24px) = ~544px
+          const estimatedMonthHeight = 544;
+          const currentMonthIndex = Math.round(scrollY / estimatedMonthHeight);
+          
           if (currentMonthIndex >= 0 && currentMonthIndex < monthsData.length) {
-            setCurrentYear(monthsData[currentMonthIndex].year);
+            const visibleMonth = monthsData[currentMonthIndex];
+            console.log(`Scroll ${scrollY}px -> month index ${currentMonthIndex}: ${MONTHS[visibleMonth.month]} ${visibleMonth.year}`);
+            
+            if (visibleMonth && visibleMonth.year !== currentYear) {
+              console.log(`Updating year from ${currentYear} to ${visibleMonth.year}`);
+              setCurrentYear(visibleMonth.year);
+            }
           }
         }}
         scrollEventThrottle={16}
       >
         {monthsData.map((monthData, monthIndex) => (
-          <View key={monthIndex} style={styles.month}>
+          <View 
+            key={monthIndex} 
+            style={styles.month}
+            ref={monthIndex === 12 ? currentMonthRef : undefined}
+          >
             <Text style={styles.monthTitle}>
               {MONTHS[monthData.month]}
             </Text>
@@ -242,7 +296,7 @@ export default function CalendarScreen() {
                       key={dayIndex}
                       style={[
                         styles.dayCell,
-                        isToday(day.date, monthData) && styles.todayCell
+                        isToday(day.date, monthData, day.isCurrentMonth) && styles.todayCell
                       ]}
                       onPress={() => {
                         const date = new Date(monthData.year, monthData.month, day.date);
@@ -252,7 +306,7 @@ export default function CalendarScreen() {
                       <Text style={[
                         styles.dayNumber,
                         !day.isCurrentMonth && styles.inactiveDayText,
-                        isToday(day.date, monthData) && styles.todayText
+                        isToday(day.date, monthData, day.isCurrentMonth) && styles.todayText
                       ]}>
                         {day.date}
                       </Text>

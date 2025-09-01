@@ -12,6 +12,7 @@ import {
   removeBlockedHours,
   updateBlockedHours,
 } from '../app/store/preferencesSlice';
+import { clearAllTasks } from '../app/store/taskSlice';
 
 // Helper to convert HH:mm to Date
 const timeStringToDate = (timeString: string): Date => {
@@ -242,6 +243,7 @@ export const Settings: React.FC = () => {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [isEditingStart, setIsEditingStart] = useState(true);
   const [tempTime, setTempTime] = useState<Date | null>(null);
+  const [showClearAllDialog, setShowClearAllDialog] = useState(false);
 
   const handleProductiveHoursChange = (range: TimeRange) => {
     dispatch(setProductiveHours(range));
@@ -292,6 +294,11 @@ export const Settings: React.FC = () => {
   const handleTimePickerDismiss = () => {
     setShowTimePicker(false);
     setEditingBlockedHour(null);
+  };
+
+  const handleClearAllTasks = () => {
+    dispatch(clearAllTasks());
+    setShowClearAllDialog(false);
   };
 
   return (
@@ -351,6 +358,22 @@ export const Settings: React.FC = () => {
         </Card.Content>
       </Card>
 
+      <Card style={styles.card}>
+        <Card.Title title="Development" />
+        <Card.Content>
+          <Button
+            mode="contained"
+            buttonColor="#dc3545"
+            textColor="white"
+            onPress={() => setShowClearAllDialog(true)}
+            style={styles.clearAllButton}
+            icon="delete-sweep"
+          >
+            Clear All Tasks
+          </Button>
+        </Card.Content>
+      </Card>
+
       {/* Time picker for editing blocked hours */}
       {showTimePicker && Platform.OS === 'ios' && (
         <Portal>
@@ -406,6 +429,27 @@ export const Settings: React.FC = () => {
               }}
             />
           </Dialog.Content>
+        </Dialog>
+      </Portal>
+
+      {/* Clear All Tasks Confirmation Dialog */}
+      <Portal>
+        <Dialog visible={showClearAllDialog} onDismiss={() => setShowClearAllDialog(false)}>
+          <Dialog.Title>Clear All Tasks</Dialog.Title>
+          <Dialog.Content>
+            <Text>Are you sure you want to clear all tasks? This action cannot be undone.</Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setShowClearAllDialog(false)}>Cancel</Button>
+            <Button 
+              mode="contained" 
+              buttonColor="#dc3545"
+              textColor="white"
+              onPress={handleClearAllTasks}
+            >
+              Clear All
+            </Button>
+          </Dialog.Actions>
         </Dialog>
       </Portal>
     </ScrollView>
@@ -477,6 +521,9 @@ const styles = StyleSheet.create({
   },
   noLabelCard: {
     marginBottom: 0,
+  },
+  clearAllButton: {
+    marginTop: 8,
   },
 });
 
