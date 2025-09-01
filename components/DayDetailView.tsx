@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
-import { Text, Portal, Modal, IconButton } from 'react-native-paper';
+import React, { useEffect, useRef } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Animated } from 'react-native';
+import { Text, Portal, IconButton } from 'react-native-paper';
 import { Task } from '../store/taskSlice';
 
 interface DayDetailViewProps {
@@ -28,6 +28,39 @@ export default function DayDetailView({
   tasks,
   month,
 }: DayDetailViewProps) {
+  const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.parallel([
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          tension: 80,
+          friction: 12,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(slideAnim, {
+          toValue: SCREEN_HEIGHT,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible, slideAnim, fadeAnim]);
   const formatHeaderDate = () => {
     const weekday = date.toLocaleDateString('en-US', { weekday: 'long' });
     const month = date.toLocaleDateString('en-US', { month: 'long' });
@@ -47,86 +80,97 @@ export default function DayDetailView({
     });
   };
 
+  if (!visible) return null;
+
   return (
     <Portal>
-      <Modal
-        visible={visible}
-        onDismiss={onDismiss}
-        contentContainerStyle={styles.modalContainer}
-      >
-        <View style={styles.container}>
-          <View style={styles.header}>
-            <View style={styles.headerTop}>
-              <Text style={styles.headerDate}>{formatHeaderDate()}</Text>
+      <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
+        <Animated.View 
+          style={[
+            styles.modalContainer,
+            {
+              transform: [{ translateY: slideAnim }]
+            }
+          ]}
+        >
+          <View style={styles.container}>
+            <View style={styles.header}>
+              <View style={styles.headerTop}>
+                <Text style={styles.headerDate}>{formatHeaderDate()}</Text>
+              </View>
+              <View style={styles.headerBottom}>
+                <TouchableOpacity onPress={onDismiss} style={styles.backButton}>
+                  <IconButton
+                    icon="chevron-left"
+                    size={24}
+                    iconColor="#FF3B30"
+                    style={styles.backIcon}
+                  />
+                  <Text style={styles.monthText}>{month}</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-            <View style={styles.headerBottom}>
-              <TouchableOpacity onPress={onDismiss} style={styles.backButton}>
-                <IconButton
-                  icon="chevron-left"
-                  size={24}
-                  iconColor="#FF3B30"
-                  style={styles.backIcon}
-                />
-                <Text style={styles.monthText}>{month}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
 
-          <ScrollView 
-            style={styles.scrollView}
-            showsVerticalScrollIndicator={false}
-          >
-            {HOURS.map((time, index) => {
-              const tasksForThisHour = getTasksForHour(index);
-              return (
-                <View key={index} style={styles.hourRow}>
-                  <View style={styles.hourLabelContainer}>
-                    <Text style={styles.hourLabel}>
-                      {time.hour}<Text style={styles.periodText}> {time.period}</Text>
-                    </Text>
+            <ScrollView 
+              style={styles.scrollView}
+              showsVerticalScrollIndicator={false}
+            >
+              {HOURS.map((time, index) => {
+                const tasksForThisHour = getTasksForHour(index);
+                return (
+                  <View key={index} style={styles.hourRow}>
+                    <View style={styles.hourLabelContainer}>
+                      <Text style={styles.hourLabel}>
+                        {time.hour}<Text style={styles.periodText}> {time.period}</Text>
+                      </Text>
+                    </View>
+                    <View style={styles.hourContent}>
+                      <View style={styles.hourLine} />
+                      {tasksForThisHour.map((task) => (
+                        <TouchableOpacity
+                          key={task.id}
+                          style={[
+                            styles.taskItem,
+                            { backgroundColor: task.completed ? '#666' : '#6750A4' }
+                          ]}
+                          onPress={() => onTaskPress(task)}
+                        >
+                          <Text style={styles.taskTitle} numberOfLines={1}>
+                            {task.title}
+                          </Text>
+                          <Text style={styles.taskTime}>
+                            {task.startTime} - {task.endTime}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
                   </View>
-                  <View style={styles.hourContent}>
-                    <View style={styles.hourLine} />
-                    {tasksForThisHour.map((task) => (
-                      <TouchableOpacity
-                        key={task.id}
-                        style={[
-                          styles.taskItem,
-                          { backgroundColor: task.completed ? '#666' : '#6750A4' }
-                        ]}
-                        onPress={() => onTaskPress(task)}
-                      >
-                        <Text style={styles.taskTitle} numberOfLines={1}>
-                          {task.title}
-                        </Text>
-                        <Text style={styles.taskTime}>
-                          {task.startTime} - {task.endTime}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-              );
-            })}
-            <View style={styles.bottomPadding} />
-          </ScrollView>
-        </View>
-      </Modal>
+                );
+              })}
+              <View style={styles.bottomPadding} />
+            </ScrollView>
+          </View>
+        </Animated.View>
+      </Animated.View>
     </Portal>
   );
 }
 
 const styles = StyleSheet.create({
-  modalContainer: {
+  overlay: {
     position: 'absolute',
     left: 0,
     right: 0,
     top: 0,
     bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContainer: {
     backgroundColor: 'white',
-    margin: 0,
-    padding: 0,
-    height: SCREEN_HEIGHT,
+    height: SCREEN_HEIGHT * 0.9,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
   container: {
     flex: 1,

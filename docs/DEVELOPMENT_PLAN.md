@@ -148,8 +148,8 @@ Result: Task appears in calendar immediately ✅
 ---
 
 ### **Calendar View Animations and Design**:
-- [ ] **Day View**: the month and date clutter the top of the sreen, the date should be centered, and in a new row above the month
-- [ ] **Slide up transition**: When a date is clicked on the calendar, the DayDetailView should slide up from the bottom of the screen
+- [x] **Day View**: the month and date clutter the top of the sreen, the date should be centered, and in a new row above the month
+- [x] **Slide up transition**: When a date is clicked on the calendar, the DayDetailView should slide up from the bottom of the screen
 - [ ] **Slide down transition**: When the back button is clicked on the DayDetailView, the view should slide down from the top of the screen
 - [ ] **Sliding transition**: When the user is in the DayDetailView, and they scroll left/right, the view should slide left/right to show the next/previous day
 - [ ] **Test Calendar Navigation**: Verify scrolling and date display work correctly
