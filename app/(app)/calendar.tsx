@@ -363,7 +363,6 @@ export default function CalendarScreen() {
           visible={isDayDetailVisible}
           onDismiss={() => {
             setIsDayDetailVisible(false);
-            setSelectedDate(null);
           }}
           onTaskPress={(task) => {
             setIsDayDetailVisible(false);

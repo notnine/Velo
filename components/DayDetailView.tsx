@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Animated } from 'react-native';
 import { Text, Portal, IconButton } from 'react-native-paper';
 import { Task } from '../store/taskSlice';
@@ -30,37 +30,45 @@ export default function DayDetailView({
 }: DayDetailViewProps) {
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [shouldRender, setShouldRender] = useState(false);
 
   useEffect(() => {
-    if (visible) {
+    if (visible && !shouldRender) {
+      setShouldRender(true);
+      // Small delay to ensure component is mounted before animation
+      setTimeout(() => {
+        Animated.parallel([
+          Animated.spring(slideAnim, {
+            toValue: 0,
+            tension: 80,
+            friction: 12,
+            useNativeDriver: true,
+          }),
+          Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      }, 10);
+    } else if (!visible && shouldRender) {
       Animated.parallel([
         Animated.spring(slideAnim, {
-          toValue: 0,
+          toValue: SCREEN_HEIGHT,
           tension: 80,
           friction: 12,
           useNativeDriver: true,
         }),
         Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    } else {
-      Animated.parallel([
-        Animated.timing(slideAnim, {
-          toValue: SCREEN_HEIGHT,
-          duration: 250,
-          useNativeDriver: true,
-        }),
-        Animated.timing(fadeAnim, {
           toValue: 0,
           duration: 200,
           useNativeDriver: true,
         }),
-      ]).start();
+      ]).start(() => {
+        setShouldRender(false);
+      });
     }
-  }, [visible, slideAnim, fadeAnim]);
+  }, [visible, slideAnim, fadeAnim, shouldRender]);
   const formatHeaderDate = () => {
     const weekday = date.toLocaleDateString('en-US', { weekday: 'long' });
     const month = date.toLocaleDateString('en-US', { month: 'long' });
@@ -80,7 +88,7 @@ export default function DayDetailView({
     });
   };
 
-  if (!visible) return null;
+  if (!shouldRender) return null;
 
   return (
     <Portal>
