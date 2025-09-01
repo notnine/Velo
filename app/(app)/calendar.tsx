@@ -14,7 +14,7 @@ import { Text, IconButton, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
-import { Task, addTask, deleteTask } from '../store/taskSlice';
+import { Task, addTask, deleteTask, updateTask } from '../store/taskSlice';
 import AddTaskModal from '../../components/AddTaskModal';
 import TaskDetailsModal from '../../components/TaskDetailsModal';
 import DayDetailView from '../../components/DayDetailView';
@@ -168,12 +168,22 @@ export default function CalendarScreen() {
   };
 
   const handleSubmit = (title: string, description: string, startDate: Date, endDate: Date) => {
-    dispatch(addTask({
-      title,
-      description,
-      startDate,
-      endDate,
-    }));
+    if (selectedTask) {
+      dispatch(updateTask({
+        id: selectedTask.id,
+        title,
+        description,
+        startDate,
+        endDate,
+      }));
+    } else {
+      dispatch(addTask({
+        title,
+        description,
+        startDate,
+        endDate,
+      }));
+    }
     setIsAddModalVisible(false);
   };
 
