@@ -161,6 +161,11 @@ Result: Task appears in calendar immediately ✅
 
 ---
 
+### **Today's Tasks View**:
+- [ ] **Timeless Tasks**: Allow tasks to be added without a scheduled time, these should appear before the tasks with a scheduled time
+
+---
+
 ## 🎯 **CURRENT FOCUS**
 
 **Status**: ✅ **MVP 95% COMPLETE** - Only voice task editing/deletion missing  
