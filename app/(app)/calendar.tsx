@@ -71,6 +71,12 @@ const getMonthData = (year: number, month: number, tasks: Task[]): MonthData => 
       // Also show task on end date if it's different (overnight task)
       if (task.endDate && task.endDate === dateStr) return true;
       return false;
+    }).sort((a, b) => {
+      // Sort by start time if available, otherwise keep original order
+      if (!a.startTime && !b.startTime) return 0;
+      if (!a.startTime) return 1;
+      if (!b.startTime) return -1;
+      return a.startTime.localeCompare(b.startTime);
     });
     days.push({
       date,
