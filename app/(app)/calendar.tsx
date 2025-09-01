@@ -153,11 +153,12 @@ export default function CalendarScreen() {
     monthsData.push(getMonthData(year, month, tasks));
   }
 
-  const isToday = (date: number, monthData: MonthData) => {
+  const isToday = (date: number, monthData: MonthData, isCurrentMonth: boolean) => {
     const today = new Date();
     return date === today.getDate() && 
            monthData.month === today.getMonth() && 
-           monthData.year === today.getFullYear();
+           monthData.year === today.getFullYear() &&
+           isCurrentMonth; // Only highlight if it's actually in the current month
   };
 
   const handleSubmit = (title: string, description: string, startDate: Date, endDate: Date) => {
@@ -279,7 +280,7 @@ export default function CalendarScreen() {
                       key={dayIndex}
                       style={[
                         styles.dayCell,
-                        isToday(day.date, monthData) && styles.todayCell
+                        isToday(day.date, monthData, day.isCurrentMonth) && styles.todayCell
                       ]}
                       onPress={() => {
                         const date = new Date(monthData.year, monthData.month, day.date);
@@ -289,7 +290,7 @@ export default function CalendarScreen() {
                       <Text style={[
                         styles.dayNumber,
                         !day.isCurrentMonth && styles.inactiveDayText,
-                        isToday(day.date, monthData) && styles.todayText
+                        isToday(day.date, monthData, day.isCurrentMonth) && styles.todayText
                       ]}>
                         {day.date}
                       </Text>
