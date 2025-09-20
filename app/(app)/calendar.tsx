@@ -130,6 +130,7 @@ export default function CalendarScreen() {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isDayDetailVisible, setIsDayDetailVisible] = useState(false);
+  const [currentViewDate, setCurrentViewDate] = useState<Date | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const currentMonthRef = useRef<View>(null);
   const monthRefs = useRef<(View | null)[]>(Array(25).fill(null));
@@ -209,7 +210,12 @@ export default function CalendarScreen() {
 
   const handleDayPress = (date: Date, monthData: MonthData) => {
     setSelectedDate(date);
+    setCurrentViewDate(date);
     setIsDayDetailVisible(true);
+  };
+
+  const handleDateChange = (newDate: Date) => {
+    setCurrentViewDate(newDate);
   };
 
   const getTasksForDate = (date: Date) => {
@@ -358,19 +364,22 @@ export default function CalendarScreen() {
         />
       )}
 
-      {selectedDate && (
+      {selectedDate && currentViewDate && (
         <DayDetailView
           visible={isDayDetailVisible}
           onDismiss={() => {
             setIsDayDetailVisible(false);
+            setCurrentViewDate(null);
           }}
           onTaskPress={(task) => {
             setIsDayDetailVisible(false);
+            setCurrentViewDate(null);
             handleTaskPress(task);
           }}
-          date={selectedDate}
-          tasks={getTasksForDate(selectedDate)}
-          month={MONTHS[selectedDate.getMonth()]}
+          date={currentViewDate}
+          tasks={tasks} // Pass all tasks, component will filter by date
+          month={MONTHS[currentViewDate.getMonth()]}
+          onDateChange={handleDateChange}
         />
       )}
     </SafeAreaView>

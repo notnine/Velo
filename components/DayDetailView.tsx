@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Animated } from 'react-native';
+import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { Text, Portal, IconButton } from 'react-native-paper';
 import { Task } from '../store/taskSlice';
 
@@ -10,6 +11,7 @@ interface DayDetailViewProps {
   date: Date;
   tasks: Task[];
   month: string;
+  onDateChange?: (newDate: Date) => void;
 }
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -27,10 +29,21 @@ export default function DayDetailView({
   date,
   tasks,
   month,
+  onDateChange,
 }: DayDetailViewProps) {
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [shouldRender, setShouldRender] = useState(false);
+  
+  // Horizontal sliding animations
+  const translateX = useRef(new Animated.Value(0)).current;
+  const [currentDate, setCurrentDate] = useState(date);
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  // Update current date when prop changes
+  useEffect(() => {
+    setCurrentDate(date);
+  }, [date]);
 
   useEffect(() => {
     if (visible && !shouldRender) {
@@ -69,17 +82,115 @@ export default function DayDetailView({
       });
     }
   }, [visible, slideAnim, fadeAnim, shouldRender]);
+
+  // Navigation functions
+  const navigateToPreviousDay = () => {
+    if (isAnimating) return;
+    setIsAnimating(true);
+    
+    const newDate = new Date(currentDate);
+    newDate.setDate(newDate.getDate() - 1);
+    
+    // Update date immediately for better UX
+    setCurrentDate(newDate);
+    onDateChange?.(newDate);
+    
+    // Animate slide to right
+    Animated.timing(translateX, {
+      toValue: 300,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => {
+      translateX.setValue(-300);
+      
+      // Animate slide in from left
+      Animated.timing(translateX, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start(() => {
+        setIsAnimating(false);
+      });
+    });
+  };
+
+  const navigateToNextDay = () => {
+    if (isAnimating) return;
+    setIsAnimating(true);
+    
+    const newDate = new Date(currentDate);
+    newDate.setDate(newDate.getDate() + 1);
+    
+    // Update date immediately for better UX
+    setCurrentDate(newDate);
+    onDateChange?.(newDate);
+    
+    // Animate slide to left
+    Animated.timing(translateX, {
+      toValue: -300,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => {
+      translateX.setValue(300);
+      
+      // Animate slide in from right
+      Animated.timing(translateX, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start(() => {
+        setIsAnimating(false);
+      });
+    });
+  };
+
+  // Gesture handler
+  const onGestureEvent = Animated.event(
+    [{ nativeEvent: { translationX: translateX } }],
+    { useNativeDriver: true }
+  );
+
+  const onHandlerStateChange = (event: any) => {
+    if (event.nativeEvent.state === State.END) {
+      const { translationX, velocityX } = event.nativeEvent;
+      
+      // Determine if swipe is significant enough
+      const threshold = 50;
+      const velocityThreshold = 500;
+      
+      if (translationX > threshold || velocityX > velocityThreshold) {
+        // Swipe right - go to previous day
+        navigateToPreviousDay();
+      } else if (translationX < -threshold || velocityX < -velocityThreshold) {
+        // Swipe left - go to next day
+        navigateToNextDay();
+      } else {
+        // Snap back to center
+        Animated.spring(translateX, {
+          toValue: 0,
+          useNativeDriver: true,
+        }).start();
+      }
+    }
+  };
   const formatHeaderDate = () => {
-    const weekday = date.toLocaleDateString('en-US', { weekday: 'long' });
-    const month = date.toLocaleDateString('en-US', { month: 'long' });
-    const day = date.getDate();
-    const year = date.getFullYear();
+    const weekday = currentDate.toLocaleDateString('en-US', { weekday: 'long' });
+    const month = currentDate.toLocaleDateString('en-US', { month: 'long' });
+    const day = currentDate.getDate();
+    const year = currentDate.getFullYear();
     
     return `${weekday} — ${month} ${day}, ${year}`;
   };
 
   const getTasksForHour = (hour: number) => {
-    return tasks.filter(task => {
+    // Filter tasks for the current date being viewed
+    const currentDateStr = currentDate.toISOString().split('T')[0];
+    const tasksForCurrentDate = tasks.filter(task => {
+      if (!task.scheduledDate) return false;
+      return task.scheduledDate === currentDateStr || (task.endDate && task.endDate === currentDateStr);
+    });
+    
+    return tasksForCurrentDate.filter(task => {
       if (!task.startTime) return false;
       const taskHour = parseInt(task.startTime.match(/(\d+):/)?.[1] || '0');
       const taskPeriod = task.startTime.includes('PM');
@@ -101,8 +212,21 @@ export default function DayDetailView({
             }
           ]}
         >
-          <View style={styles.container}>
-            <View style={styles.header}>
+          <PanGestureHandler
+            onGestureEvent={onGestureEvent}
+            onHandlerStateChange={onHandlerStateChange}
+            activeOffsetX={[-10, 10]}
+            failOffsetY={[-5, 5]}
+          >
+            <Animated.View 
+              style={[
+                styles.container,
+                {
+                  transform: [{ translateX }]
+                }
+              ]}
+            >
+              <View style={styles.header}>
               <View style={styles.headerTop}>
                 <Text style={styles.headerDate}>{formatHeaderDate()}</Text>
               </View>
@@ -157,7 +281,8 @@ export default function DayDetailView({
               })}
               <View style={styles.bottomPadding} />
             </ScrollView>
-          </View>
+            </Animated.View>
+          </PanGestureHandler>
         </Animated.View>
       </Animated.View>
     </Portal>
