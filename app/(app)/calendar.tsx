@@ -52,6 +52,44 @@ const getMonthData = (year: number, month: number, tasks: Task[]): MonthData => 
   
   const days = [];
   
+  // Pre-compute task lookup map for this month to avoid repeated filtering
+  const taskMap = new Map<string, Task[]>();
+  const monthStr = `${year}-${String(month + 1).padStart(2, '0')}`;
+  
+  // Pre-populate task map for all days in this month
+  for (let date = 1; date <= daysInMonth; date++) {
+    const dateStr = `${monthStr}-${String(date).padStart(2, '0')}`;
+    taskMap.set(dateStr, []);
+  }
+  
+  // Single pass through tasks to populate the map
+  for (const task of tasks) {
+    if (task.scheduledDate && task.scheduledDate.startsWith(monthStr)) {
+      const tasksForDate = taskMap.get(task.scheduledDate);
+      if (tasksForDate) {
+        tasksForDate.push(task);
+      }
+    }
+    if (task.endDate && task.endDate.startsWith(monthStr)) {
+      const tasksForDate = taskMap.get(task.endDate);
+      if (tasksForDate) {
+        tasksForDate.push(task);
+      }
+    }
+  }
+  
+  // Sort tasks once for each day that has tasks
+  for (const [dateStr, dayTasks] of taskMap) {
+    if (dayTasks.length > 0) {
+      dayTasks.sort((a, b) => {
+        if (!a.startTime && !b.startTime) return 0;
+        if (!a.startTime) return 1;
+        if (!b.startTime) return -1;
+        return a.startTime.localeCompare(b.startTime);
+      });
+    }
+  }
+  
   // Add days from previous month
   for (let i = startingDay - 1; i >= 0; i--) {
     const prevMonthLastDay = new Date(year, month, 0).getDate();
@@ -64,20 +102,9 @@ const getMonthData = (year: number, month: number, tasks: Task[]): MonthData => 
   
   // Add days of current month
   for (let date = 1; date <= daysInMonth; date++) {
-    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
-    const dayTasks = tasks.filter(task => {
-      // Show task on start date
-      if (task.scheduledDate === dateStr) return true;
-      // Also show task on end date if it's different (overnight task)
-      if (task.endDate && task.endDate === dateStr) return true;
-      return false;
-    }).sort((a, b) => {
-      // Sort by start time if available, otherwise keep original order
-      if (!a.startTime && !b.startTime) return 0;
-      if (!a.startTime) return 1;
-      if (!b.startTime) return -1;
-      return a.startTime.localeCompare(b.startTime);
-    });
+    const dateStr = `${monthStr}-${String(date).padStart(2, '0')}`;
+    const dayTasks = taskMap.get(dateStr) || [];
+    
     days.push({
       date,
       tasks: dayTasks,
@@ -145,6 +172,9 @@ export default function CalendarScreen() {
   const baseYear = today.getFullYear();
 
   const monthsData: MonthData[] = useMemo(() => {
+    const calendarStartTime = performance.now();
+    console.log('[Calendar] 🗓️ CALENDAR CALCULATION START - Time:', calendarStartTime);
+    
     const data: MonthData[] = [];
     for (let i = -12; i <= 12; i++) {
       let month = currentMonth + i;
@@ -160,8 +190,14 @@ export default function CalendarScreen() {
         year -= 1;
       }
       
+      const monthStartTime = performance.now();
       data.push(getMonthData(year, month, tasks));
+      const monthEndTime = performance.now();
+      console.log('[Calendar] 📅 MONTH CALCULATION - Month:', i, 'Time:', monthEndTime - monthStartTime, 'ms');
     }
+    
+    const calendarEndTime = performance.now();
+    console.log('[Calendar] 🗓️ CALENDAR CALCULATION END - Total Time:', calendarEndTime - calendarStartTime, 'ms');
     return data;
   }, [currentMonth, baseYear, tasks]);
 
@@ -214,28 +250,37 @@ export default function CalendarScreen() {
   };
 
   const handleDayPress = (date: Date, monthData: MonthData) => {
-    console.log('[Calendar] handleDayPress called with date:', date.toISOString());
+    const tapStartTime = performance.now();
+    console.log('[Calendar] 🎯 TAP START - handleDayPress called with date:', date.toISOString(), 'Time:', tapStartTime);
     console.log('[Calendar] Current selectedDate:', selectedDate?.toISOString() || 'null');
     console.log('[Calendar] Current isDayDetailVisible:', isDayDetailVisible);
     
+    const stateUpdateStartTime = performance.now();
     setSelectedDate(date);
     setIsDayDetailVisible(true);
+    const stateUpdateEndTime = performance.now();
     
+    console.log('[Calendar] ⚡ STATE UPDATE - Time:', stateUpdateEndTime - stateUpdateStartTime, 'ms');
     console.log('[Calendar] State updates queued');
+    
+    // Store timing for DayDetailView to use
+    (global as any).tapStartTime = tapStartTime;
   };
 
   const handleDateChange = (newDate: Date) => {
     setSelectedDate(newDate);
   };
 
-  const getTasksForDate = (date: Date) => {
-    if (!date) return [];
-    const dateStr = formatLocalDateString(date);
-    return tasks.filter(task => {
-      // Show task if it starts on this date OR ends on this date (overnight task)
-      return task.scheduledDate === dateStr || (task.endDate && task.endDate === dateStr);
-    });
-  };
+  const getTasksForDate = useMemo(() => {
+    return (date: Date) => {
+      if (!date) return [];
+      const dateStr = formatLocalDateString(date);
+      return tasks.filter(task => {
+        // Show task if it starts on this date OR ends on this date (overnight task)
+        return task.scheduledDate === dateStr || (task.endDate && task.endDate === dateStr);
+      });
+    };
+  }, [tasks]);
 
   // Scroll to current month title directly
   useEffect(() => {
@@ -372,30 +417,26 @@ export default function CalendarScreen() {
         />
       )}
 
-      {selectedDate && (
-        <>
-          {console.log('[Calendar] Rendering DayDetailView - selectedDate:', selectedDate.toISOString(), 'isDayDetailVisible:', isDayDetailVisible)}
-          <DayDetailView
-            key={selectedDate.toISOString()}
-            visible={isDayDetailVisible}
-            onDismiss={() => {
-              console.log('[Calendar] DayDetailView onDismiss called');
-              setIsDayDetailVisible(false);
-              setSelectedDate(null);
-            }}
-            onTaskPress={(task) => {
-              console.log('[Calendar] DayDetailView onTaskPress called');
-              setIsDayDetailVisible(false);
-              setSelectedDate(null);
-              handleTaskPress(task);
-            }}
-            date={selectedDate}
-            tasks={tasks} // Pass all tasks, component will filter by date
-            month={MONTHS[selectedDate.getMonth()]}
-            onDateChange={handleDateChange}
-          />
-        </>
-      )}
+      {/* Pre-mounted DayDetailView - always rendered, visibility controlled by props */}
+      {console.log('[Calendar] Rendering DayDetailView - selectedDate:', selectedDate?.toISOString() || 'null', 'isDayDetailVisible:', isDayDetailVisible)}
+      <DayDetailView
+        visible={isDayDetailVisible && !!selectedDate}
+        onDismiss={() => {
+          console.log('[Calendar] DayDetailView onDismiss called');
+          setIsDayDetailVisible(false);
+          setSelectedDate(null);
+        }}
+        onTaskPress={(task) => {
+          console.log('[Calendar] DayDetailView onTaskPress called');
+          setIsDayDetailVisible(false);
+          setSelectedDate(null);
+          handleTaskPress(task);
+        }}
+        date={selectedDate || new Date()}
+        tasks={tasks} // Pass all tasks, component will filter by date
+        month={selectedDate ? MONTHS[selectedDate.getMonth()] : MONTHS[new Date().getMonth()]}
+        onDateChange={handleDateChange}
+      />
     </SafeAreaView>
   );
 }

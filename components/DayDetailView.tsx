@@ -31,31 +31,55 @@ export default function DayDetailView({
   month,
   onDateChange,
 }: DayDetailViewProps) {
-  console.log('[DayDetailView] Component render - visible:', visible, 'date:', date.toISOString());
+  const componentRenderStartTime = performance.now();
+  console.log('[DayDetailView] 🎬 COMPONENT RENDER START - visible:', visible, 'date:', date.toISOString(), 'Time:', componentRenderStartTime);
   console.log('[DayDetailView] Component instance created/remounted');
   
+  // Calculate latency from tap to component render
+  if ((global as any).tapStartTime) {
+    const renderLatency = componentRenderStartTime - (global as any).tapStartTime;
+    console.log('[DayDetailView] ⏱️ RENDER LATENCY - Time from tap to render:', renderLatency, 'ms');
+  }
+  
+  const refsInitTime = performance.now();
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const hasAnimated = useRef(false);
   const [gestureEnabled, setGestureEnabled] = useState(false);
   const animationId = useRef(Math.random().toString(36).substr(2, 9)).current;
   const currentAnimation = useRef<any>(null);
+  const refsInitEndTime = performance.now();
+  console.log('[DayDetailView] 🔧 REFS INIT - Time:', refsInitEndTime - refsInitTime, 'ms');
   
   // Horizontal sliding animations
+  const stateInitTime = performance.now();
   const translateX = useRef(new Animated.Value(0)).current;
   const [currentDate, setCurrentDate] = useState(date);
   const [isAnimating, setIsAnimating] = useState(false);
+  const stateInitEndTime = performance.now();
+  console.log('[DayDetailView] 🔄 STATE INIT - Time:', stateInitEndTime - stateInitTime, 'ms');
 
-  // Update current date when prop changes
+  // Update current date when prop changes - this will trigger re-render but not remount
   useEffect(() => {
+    console.log('[DayDetailView] 📅 DATE PROP CHANGED - from:', currentDate.toISOString(), 'to:', date.toISOString());
     setCurrentDate(date);
-  }, [date]);
+  }, [date, currentDate]);
 
-  // Simple animation on visibility change
-  useEffect(() => {
-    console.log('[DayDetailView] useEffect triggered - visible:', visible, 'hasAnimated:', hasAnimated.current);
+  // Simple animation on visibility change - useLayoutEffect for immediate execution
+  useLayoutEffect(() => {
+    const effectStartTime = performance.now();
+    console.log('[DayDetailView] 🎭 USELAYOUTEFFECT TRIGGERED - visible:', visible, 'hasAnimated:', hasAnimated.current, 'Time:', effectStartTime);
+    
     if (visible && !hasAnimated.current) {
-      console.log('[DayDetailView] Starting slide up animation - ID:', animationId);
+      const animationStartTime = performance.now();
+      console.log('[DayDetailView] 🚀 ANIMATION START - Starting slide up animation - ID:', animationId, 'Time:', animationStartTime);
+      
+      // Calculate total latency from tap to animation start
+      if ((global as any).tapStartTime) {
+        const totalLatency = animationStartTime - (global as any).tapStartTime;
+        console.log('[DayDetailView] ⏱️ TOTAL LATENCY - Time from tap to animation start:', totalLatency, 'ms');
+      }
+      
       hasAnimated.current = true;
       
       // Cancel any existing animation
@@ -63,6 +87,7 @@ export default function DayDetailView({
         currentAnimation.current.stop();
       }
       
+      const animationCreateTime = performance.now();
       currentAnimation.current = Animated.parallel([
         Animated.spring(slideAnim, {
           toValue: 0,
@@ -77,8 +102,12 @@ export default function DayDetailView({
         }),
       ]);
       
+      const animationStartCallTime = performance.now();
+      console.log('[DayDetailView] ⚡ ANIMATION CREATE TIME - Time to create animation:', animationStartCallTime - animationCreateTime, 'ms');
+      
       currentAnimation.current.start(() => {
-        console.log('[DayDetailView] Slide up animation completed - ID:', animationId);
+        const animationCompleteTime = performance.now();
+        console.log('[DayDetailView] ✅ ANIMATION COMPLETE - Slide up animation completed - ID:', animationId, 'Time:', animationCompleteTime);
         // Enable gestures after animation completes
         setGestureEnabled(true);
         currentAnimation.current = null;
@@ -239,6 +268,7 @@ export default function DayDetailView({
   };
 
   // Memoize tasks for current date to avoid filtering on every render
+  const memoizedCalcTime = performance.now();
   const tasksForCurrentDate = useMemo(() => {
     const currentDateStr = currentDate.toISOString().split('T')[0];
     return tasks.filter(task => {
@@ -246,6 +276,8 @@ export default function DayDetailView({
       return task.scheduledDate === currentDateStr || (task.endDate && task.endDate === currentDateStr);
     });
   }, [tasks, currentDate]);
+  const memoizedCalcEndTime = performance.now();
+  console.log('[DayDetailView] 🧮 MEMOIZED CALC - Time:', memoizedCalcEndTime - memoizedCalcTime, 'ms');
 
   const getTasksForHour = (hour: number) => {
     return tasksForCurrentDate.filter(task => {
@@ -257,12 +289,23 @@ export default function DayDetailView({
     });
   };
 
-  console.log('[DayDetailView] Render check - visible:', visible);
+  const renderCheckTime = performance.now();
+  console.log('[DayDetailView] 🎨 RENDER CHECK - visible:', visible, 'Time:', renderCheckTime);
+  
+  // Calculate latency from tap to render check
+  if ((global as any).tapStartTime) {
+    const renderCheckLatency = renderCheckTime - (global as any).tapStartTime;
+    console.log('[DayDetailView] ⏱️ RENDER CHECK LATENCY - Time from tap to render check:', renderCheckLatency, 'ms');
+  }
+  
   if (!visible) {
     console.log('[DayDetailView] Not rendering - visible is false');
-    return null;
+    // Return empty view instead of null to keep component mounted
+    return <View style={{ position: 'absolute', left: -9999, top: -9999, width: 1, height: 1 }} />;
   }
-  console.log('[DayDetailView] Rendering modal');
+  
+  const jsxCreationTime = performance.now();
+  console.log('[DayDetailView] 🎬 RENDERING MODAL - Starting modal render');
 
   return (
     <Portal>
@@ -355,6 +398,12 @@ export default function DayDetailView({
       </Animated.View>
     </Portal>
   );
+  
+  const jsxCreationEndTime = performance.now();
+  console.log('[DayDetailView] 🎨 JSX CREATION - Time:', jsxCreationEndTime - jsxCreationTime, 'ms');
+  
+  const componentRenderEndTime = performance.now();
+  console.log('[DayDetailView] 🎬 COMPONENT RENDER END - Total Time:', componentRenderEndTime - componentRenderStartTime, 'ms');
 }
 
 const styles = StyleSheet.create({

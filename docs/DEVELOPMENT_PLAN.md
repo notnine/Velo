@@ -154,6 +154,10 @@ Result: Task appears in calendar immediately ✅
 - [x] **Sliding transition**: When the user is in the DayDetailView, and they scroll left/right, the view should slide left/right to show the next/previous day
 - [x] **Test Calendar Navigation**: Verify scrolling and date display work correctly
 - [ ] **Optimize Animation**: When a user quickly taps on dates, the time between tap, and the start of the slide up animation into the day view is too slow, speed this up.
+  - [x] **Measure Current Latency**: Add performance timing logs to measure current tap-to-animation-start latency
+  - [ ] **Fix useEffect Delay**: Replace useEffect with useLayoutEffect for animation (saves ~140ms, 24% improvement)
+  - [ ] **Fix Calendar Render Delay**: Optimize expensive calendar calculations causing 440-460ms delay (saves ~400ms, 75% improvement)
+  - [ ] **Test Performance Improvements**: Verify total latency reduced from ~580ms to <50ms target
 
 ---
 
