@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState, useMemo } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Animated } from 'react-native';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { Text, Portal, IconButton } from 'react-native-paper';
@@ -31,9 +31,15 @@ export default function DayDetailView({
   month,
   onDateChange,
 }: DayDetailViewProps) {
+  console.log('[DayDetailView] Component render - visible:', visible, 'date:', date.toISOString());
+  console.log('[DayDetailView] Component instance created/remounted');
+  
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const [shouldRender, setShouldRender] = useState(false);
+  const hasAnimated = useRef(false);
+  const [gestureEnabled, setGestureEnabled] = useState(false);
+  const animationId = useRef(Math.random().toString(36).substr(2, 9)).current;
+  const currentAnimation = useRef<any>(null);
   
   // Horizontal sliding animations
   const translateX = useRef(new Animated.Value(0)).current;
@@ -45,43 +51,63 @@ export default function DayDetailView({
     setCurrentDate(date);
   }, [date]);
 
+  // Simple animation on visibility change
   useEffect(() => {
-    if (visible && !shouldRender) {
-      setShouldRender(true);
-      // Small delay to ensure component is mounted before animation
-      setTimeout(() => {
-        Animated.parallel([
-          Animated.spring(slideAnim, {
-            toValue: 0,
-            tension: 80,
-            friction: 12,
-            useNativeDriver: true,
-          }),
-          Animated.timing(fadeAnim, {
-            toValue: 1,
-            duration: 200,
-            useNativeDriver: true,
-          }),
-        ]).start();
-      }, 10);
-    } else if (!visible && shouldRender) {
-      Animated.parallel([
+    console.log('[DayDetailView] useEffect triggered - visible:', visible, 'hasAnimated:', hasAnimated.current);
+    if (visible && !hasAnimated.current) {
+      console.log('[DayDetailView] Starting slide up animation - ID:', animationId);
+      hasAnimated.current = true;
+      
+      // Cancel any existing animation
+      if (currentAnimation.current) {
+        currentAnimation.current.stop();
+      }
+      
+      currentAnimation.current = Animated.parallel([
         Animated.spring(slideAnim, {
-          toValue: SCREEN_HEIGHT,
+          toValue: 0,
           tension: 80,
           friction: 12,
           useNativeDriver: true,
         }),
         Animated.timing(fadeAnim, {
-          toValue: 0,
+          toValue: 1,
           duration: 200,
           useNativeDriver: true,
         }),
-      ]).start(() => {
-        setShouldRender(false);
+      ]);
+      
+      currentAnimation.current.start(() => {
+        console.log('[DayDetailView] Slide up animation completed - ID:', animationId);
+        // Enable gestures after animation completes
+        setGestureEnabled(true);
+        currentAnimation.current = null;
       });
+    } else if (!visible) {
+      console.log('[DayDetailView] Resetting animation values');
+      hasAnimated.current = false;
+      setGestureEnabled(false);
+      // Cancel any running animation
+      if (currentAnimation.current) {
+        currentAnimation.current.stop();
+        currentAnimation.current = null;
+      }
+      // Reset when not visible
+      slideAnim.setValue(SCREEN_HEIGHT);
+      fadeAnim.setValue(0);
     }
-  }, [visible, slideAnim, fadeAnim, shouldRender]);
+  }, [visible]);
+
+  // Cleanup effect to cancel animations on unmount
+  useEffect(() => {
+    return () => {
+      console.log('[DayDetailView] Component unmounting, canceling animations - ID:', animationId);
+      if (currentAnimation.current) {
+        currentAnimation.current.stop();
+        currentAnimation.current = null;
+      }
+    };
+  }, []);
 
   // Navigation functions
   const navigateToPreviousDay = () => {
@@ -173,6 +199,36 @@ export default function DayDetailView({
       }
     }
   };
+  // Custom dismiss function that handles slide down animation
+  const handleDismiss = () => {
+    console.log('[DayDetailView] handleDismiss called - ID:', animationId, 'Stack trace:', new Error().stack);
+    
+    // Cancel any existing animation
+    if (currentAnimation.current) {
+      currentAnimation.current.stop();
+    }
+    
+    currentAnimation.current = Animated.parallel([
+      Animated.spring(slideAnim, {
+        toValue: SCREEN_HEIGHT,
+        tension: 80,
+        friction: 12,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]);
+    
+    currentAnimation.current.start(() => {
+      console.log('[DayDetailView] Slide down animation completed, calling onDismiss - ID:', animationId);
+      currentAnimation.current = null;
+      onDismiss();
+    });
+  };
+
   const formatHeaderDate = () => {
     const weekday = currentDate.toLocaleDateString('en-US', { weekday: 'long' });
     const month = currentDate.toLocaleDateString('en-US', { month: 'long' });
@@ -182,14 +238,16 @@ export default function DayDetailView({
     return `${weekday} — ${month} ${day}, ${year}`;
   };
 
-  const getTasksForHour = (hour: number) => {
-    // Filter tasks for the current date being viewed
+  // Memoize tasks for current date to avoid filtering on every render
+  const tasksForCurrentDate = useMemo(() => {
     const currentDateStr = currentDate.toISOString().split('T')[0];
-    const tasksForCurrentDate = tasks.filter(task => {
+    return tasks.filter(task => {
       if (!task.scheduledDate) return false;
       return task.scheduledDate === currentDateStr || (task.endDate && task.endDate === currentDateStr);
     });
-    
+  }, [tasks, currentDate]);
+
+  const getTasksForHour = (hour: number) => {
     return tasksForCurrentDate.filter(task => {
       if (!task.startTime) return false;
       const taskHour = parseInt(task.startTime.match(/(\d+):/)?.[1] || '0');
@@ -199,7 +257,12 @@ export default function DayDetailView({
     });
   };
 
-  if (!shouldRender) return null;
+  console.log('[DayDetailView] Render check - visible:', visible);
+  if (!visible) {
+    console.log('[DayDetailView] Not rendering - visible is false');
+    return null;
+  }
+  console.log('[DayDetailView] Rendering modal');
 
   return (
     <Portal>
@@ -215,8 +278,10 @@ export default function DayDetailView({
           <PanGestureHandler
             onGestureEvent={onGestureEvent}
             onHandlerStateChange={onHandlerStateChange}
-            activeOffsetX={[-10, 10]}
-            failOffsetY={[-5, 5]}
+            activeOffsetX={[-50, 50]}
+            failOffsetY={[-20, 20]}
+            shouldCancelWhenOutside={false}
+            enabled={gestureEnabled}
           >
             <Animated.View 
               style={[
@@ -231,7 +296,10 @@ export default function DayDetailView({
                 <Text style={styles.headerDate}>{formatHeaderDate()}</Text>
               </View>
               <View style={styles.headerBottom}>
-                <TouchableOpacity onPress={onDismiss} style={styles.backButton}>
+                  <TouchableOpacity onPress={() => {
+                    console.log('[DayDetailView] Back button pressed');
+                    handleDismiss();
+                  }} style={styles.backButton}>
                   <IconButton
                     icon="chevron-left"
                     size={24}
