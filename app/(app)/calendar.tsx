@@ -2,7 +2,7 @@
  * Calendar screen that will show tasks organized by date. This screen helps users
  * view and manage their scheduled tasks in a calendar format.
  */
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -136,28 +136,34 @@ export default function CalendarScreen() {
   const theme = useTheme();
   const dispatch = useDispatch();
 
+  // Debug calendar renders
+  console.log('[Calendar] Calendar render - selectedDate:', selectedDate?.toISOString() || 'null', 'isDayDetailVisible:', isDayDetailVisible);
+
   // Generate 25 months: 12 months before current month + current month + 12 months after
   const today = new Date();
   const currentMonth = today.getMonth();
   const baseYear = today.getFullYear();
 
-  const monthsData: MonthData[] = [];
-  for (let i = -12; i <= 12; i++) {
-    let month = currentMonth + i;
-    let year = baseYear;
-    
-    // Handle month overflow/underflow
-    while (month > 11) {
-      month -= 12;
-      year += 1;
+  const monthsData: MonthData[] = useMemo(() => {
+    const data: MonthData[] = [];
+    for (let i = -12; i <= 12; i++) {
+      let month = currentMonth + i;
+      let year = baseYear;
+      
+      // Handle month overflow/underflow
+      while (month > 11) {
+        month -= 12;
+        year += 1;
+      }
+      while (month < 0) {
+        month += 12;
+        year -= 1;
+      }
+      
+      data.push(getMonthData(year, month, tasks));
     }
-    while (month < 0) {
-      month += 12;
-      year -= 1;
-    }
-    
-    monthsData.push(getMonthData(year, month, tasks));
-  }
+    return data;
+  }, [currentMonth, baseYear, tasks]);
 
   const isToday = (date: number, monthData: MonthData, isCurrentMonth: boolean) => {
     const today = new Date();
@@ -208,8 +214,18 @@ export default function CalendarScreen() {
   };
 
   const handleDayPress = (date: Date, monthData: MonthData) => {
+    console.log('[Calendar] handleDayPress called with date:', date.toISOString());
+    console.log('[Calendar] Current selectedDate:', selectedDate?.toISOString() || 'null');
+    console.log('[Calendar] Current isDayDetailVisible:', isDayDetailVisible);
+    
     setSelectedDate(date);
     setIsDayDetailVisible(true);
+    
+    console.log('[Calendar] State updates queued');
+  };
+
+  const handleDateChange = (newDate: Date) => {
+    setSelectedDate(newDate);
   };
 
   const getTasksForDate = (date: Date) => {
@@ -269,10 +285,8 @@ export default function CalendarScreen() {
           
           if (currentMonthIndex >= 0 && currentMonthIndex < monthsData.length) {
             const visibleMonth = monthsData[currentMonthIndex];
-            console.log(`Scroll ${scrollY}px -> month index ${currentMonthIndex}: ${MONTHS[visibleMonth.month]} ${visibleMonth.year}`);
             
             if (visibleMonth && visibleMonth.year !== currentYear) {
-              console.log(`Updating year from ${currentYear} to ${visibleMonth.year}`);
               setCurrentYear(visibleMonth.year);
             }
           }
@@ -359,20 +373,28 @@ export default function CalendarScreen() {
       )}
 
       {selectedDate && (
-        <DayDetailView
-          visible={isDayDetailVisible}
-          onDismiss={() => {
-            setIsDayDetailVisible(false);
-            setSelectedDate(null);
-          }}
-          onTaskPress={(task) => {
-            setIsDayDetailVisible(false);
-            handleTaskPress(task);
-          }}
-          date={selectedDate}
-          tasks={getTasksForDate(selectedDate)}
-          month={MONTHS[selectedDate.getMonth()]}
-        />
+        <>
+          {console.log('[Calendar] Rendering DayDetailView - selectedDate:', selectedDate.toISOString(), 'isDayDetailVisible:', isDayDetailVisible)}
+          <DayDetailView
+            key={selectedDate.toISOString()}
+            visible={isDayDetailVisible}
+            onDismiss={() => {
+              console.log('[Calendar] DayDetailView onDismiss called');
+              setIsDayDetailVisible(false);
+              setSelectedDate(null);
+            }}
+            onTaskPress={(task) => {
+              console.log('[Calendar] DayDetailView onTaskPress called');
+              setIsDayDetailVisible(false);
+              setSelectedDate(null);
+              handleTaskPress(task);
+            }}
+            date={selectedDate}
+            tasks={tasks} // Pass all tasks, component will filter by date
+            month={MONTHS[selectedDate.getMonth()]}
+            onDateChange={handleDateChange}
+          />
+        </>
       )}
     </SafeAreaView>
   );
