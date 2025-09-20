@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Animated } from 'react-native';
-import { PanGestureHandler, State } from 'react-native-gesture-handler';
+import { PanGestureHandler, State, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Text, Portal, IconButton } from 'react-native-paper';
 import { Task } from '../store/taskSlice';
 
@@ -33,12 +33,13 @@ export default function DayDetailView({
 }: DayDetailViewProps) {
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const [shouldRender, setShouldRender] = useState(false);
+  const hasAnimated = useRef(false);
   
   // Horizontal sliding animations
   const translateX = useRef(new Animated.Value(0)).current;
   const [currentDate, setCurrentDate] = useState(date);
   const [isAnimating, setIsAnimating] = useState(false);
+  
 
   // Update current date when prop changes
   useEffect(() => {
@@ -46,42 +47,29 @@ export default function DayDetailView({
   }, [date]);
 
   useEffect(() => {
-    if (visible && !shouldRender) {
-      setShouldRender(true);
-      // Small delay to ensure component is mounted before animation
-      setTimeout(() => {
-        Animated.parallel([
-          Animated.spring(slideAnim, {
-            toValue: 0,
-            tension: 80,
-            friction: 12,
-            useNativeDriver: true,
-          }),
-          Animated.timing(fadeAnim, {
-            toValue: 1,
-            duration: 200,
-            useNativeDriver: true,
-          }),
-        ]).start();
-      }, 10);
-    } else if (!visible && shouldRender) {
+    if (visible && !hasAnimated.current) {
+      hasAnimated.current = true;
+      // Start animation immediately with minimal delay
       Animated.parallel([
         Animated.spring(slideAnim, {
-          toValue: SCREEN_HEIGHT,
+          toValue: 0,
           tension: 80,
           friction: 12,
           useNativeDriver: true,
         }),
         Animated.timing(fadeAnim, {
-          toValue: 0,
+          toValue: 1,
           duration: 200,
           useNativeDriver: true,
         }),
-      ]).start(() => {
-        setShouldRender(false);
-      });
+      ]).start();
+    } else if (!visible) {
+      // Reset to initial state when not visible
+      hasAnimated.current = false;
+      slideAnim.setValue(SCREEN_HEIGHT);
+      fadeAnim.setValue(0);
     }
-  }, [visible, slideAnim, fadeAnim, shouldRender]);
+  }, [visible, slideAnim, fadeAnim]);
 
   // Navigation functions
   const navigateToPreviousDay = () => {
@@ -152,16 +140,28 @@ export default function DayDetailView({
 
   const onHandlerStateChange = (event: any) => {
     if (event.nativeEvent.state === State.END) {
-      const { translationX, velocityX } = event.nativeEvent;
+      const { translationX, translationY, velocityX, velocityY } = event.nativeEvent;
       
-      // Determine if swipe is significant enough
-      const threshold = 50;
+      // Only handle horizontal swipes, ignore vertical ones
+      const horizontalThreshold = 50;
+      const verticalThreshold = 100;
       const velocityThreshold = 500;
       
-      if (translationX > threshold || velocityX > velocityThreshold) {
+      // If it's primarily a vertical gesture, don't handle it (let modal handle it)
+      if (Math.abs(translationY) > Math.abs(translationX) && Math.abs(translationY) > verticalThreshold) {
+        // Reset horizontal position and let vertical gesture pass through
+        Animated.spring(translateX, {
+          toValue: 0,
+          useNativeDriver: true,
+        }).start();
+        return;
+      }
+      
+      // Handle horizontal gestures
+      if (translationX > horizontalThreshold || velocityX > velocityThreshold) {
         // Swipe right - go to previous day
         navigateToPreviousDay();
-      } else if (translationX < -threshold || velocityX < -velocityThreshold) {
+      } else if (translationX < -horizontalThreshold || velocityX < -velocityThreshold) {
         // Swipe left - go to next day
         navigateToNextDay();
       } else {
@@ -173,6 +173,26 @@ export default function DayDetailView({
       }
     }
   };
+
+  // Custom dismiss function that handles animation
+  const handleDismiss = () => {
+    Animated.parallel([
+      Animated.spring(slideAnim, {
+        toValue: SCREEN_HEIGHT * 0.9,
+        tension: 80,
+        friction: 12,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      onDismiss();
+    });
+  };
+
   const formatHeaderDate = () => {
     const weekday = currentDate.toLocaleDateString('en-US', { weekday: 'long' });
     const month = currentDate.toLocaleDateString('en-US', { month: 'long' });
@@ -182,14 +202,16 @@ export default function DayDetailView({
     return `${weekday} — ${month} ${day}, ${year}`;
   };
 
-  const getTasksForHour = (hour: number) => {
-    // Filter tasks for the current date being viewed
+  // Memoize tasks for current date to avoid filtering on every render
+  const tasksForCurrentDate = useMemo(() => {
     const currentDateStr = currentDate.toISOString().split('T')[0];
-    const tasksForCurrentDate = tasks.filter(task => {
+    return tasks.filter(task => {
       if (!task.scheduledDate) return false;
       return task.scheduledDate === currentDateStr || (task.endDate && task.endDate === currentDateStr);
     });
-    
+  }, [tasks, currentDate]);
+
+  const getTasksForHour = (hour: number) => {
     return tasksForCurrentDate.filter(task => {
       if (!task.startTime) return false;
       const taskHour = parseInt(task.startTime.match(/(\d+):/)?.[1] || '0');
@@ -199,7 +221,7 @@ export default function DayDetailView({
     });
   };
 
-  if (!shouldRender) return null;
+  if (!visible) return null;
 
   return (
     <Portal>
@@ -212,26 +234,13 @@ export default function DayDetailView({
             }
           ]}
         >
-          <PanGestureHandler
-            onGestureEvent={onGestureEvent}
-            onHandlerStateChange={onHandlerStateChange}
-            activeOffsetX={[-10, 10]}
-            failOffsetY={[-5, 5]}
-          >
-            <Animated.View 
-              style={[
-                styles.container,
-                {
-                  transform: [{ translateX }]
-                }
-              ]}
-            >
-              <View style={styles.header}>
+          <View style={styles.container}>
+            <View style={styles.header}>
               <View style={styles.headerTop}>
                 <Text style={styles.headerDate}>{formatHeaderDate()}</Text>
               </View>
               <View style={styles.headerBottom}>
-                <TouchableOpacity onPress={onDismiss} style={styles.backButton}>
+                <TouchableOpacity onPress={handleDismiss} style={styles.backButton}>
                   <IconButton
                     icon="chevron-left"
                     size={24}
@@ -243,10 +252,25 @@ export default function DayDetailView({
               </View>
             </View>
 
-            <ScrollView 
-              style={styles.scrollView}
-              showsVerticalScrollIndicator={false}
+            <PanGestureHandler
+              onGestureEvent={onGestureEvent}
+              onHandlerStateChange={onHandlerStateChange}
+              activeOffsetX={[-10, 10]}
+              failOffsetY={[-50, 50]}
+              shouldCancelWhenOutside={false}
             >
+              <Animated.View 
+                style={[
+                  styles.scrollContainer,
+                  {
+                    transform: [{ translateX }]
+                  }
+                ]}
+              >
+                <ScrollView 
+                  style={styles.scrollView}
+                  showsVerticalScrollIndicator={false}
+                >
               {HOURS.map((time, index) => {
                 const tasksForThisHour = getTasksForHour(index);
                 return (
@@ -279,10 +303,11 @@ export default function DayDetailView({
                   </View>
                 );
               })}
-              <View style={styles.bottomPadding} />
-            </ScrollView>
-            </Animated.View>
-          </PanGestureHandler>
+                  <View style={styles.bottomPadding} />
+                </ScrollView>
+              </Animated.View>
+            </PanGestureHandler>
+          </View>
         </Animated.View>
       </Animated.View>
     </Portal>
@@ -306,6 +331,10 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
   },
   container: {
+    flex: 1,
+    backgroundColor: 'white',
+  },
+  scrollContainer: {
     flex: 1,
     backgroundColor: 'white',
   },

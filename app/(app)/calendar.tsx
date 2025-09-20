@@ -2,7 +2,7 @@
  * Calendar screen that will show tasks organized by date. This screen helps users
  * view and manage their scheduled tasks in a calendar format.
  */
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -142,23 +142,26 @@ export default function CalendarScreen() {
   const currentMonth = today.getMonth();
   const baseYear = today.getFullYear();
 
-  const monthsData: MonthData[] = [];
-  for (let i = -12; i <= 12; i++) {
-    let month = currentMonth + i;
-    let year = baseYear;
-    
-    // Handle month overflow/underflow
-    while (month > 11) {
-      month -= 12;
-      year += 1;
+  const monthsData: MonthData[] = useMemo(() => {
+    const data: MonthData[] = [];
+    for (let i = -12; i <= 12; i++) {
+      let month = currentMonth + i;
+      let year = baseYear;
+      
+      // Handle month overflow/underflow
+      while (month > 11) {
+        month -= 12;
+        year += 1;
+      }
+      while (month < 0) {
+        month += 12;
+        year -= 1;
+      }
+      
+      data.push(getMonthData(year, month, tasks));
     }
-    while (month < 0) {
-      month += 12;
-      year -= 1;
-    }
-    
-    monthsData.push(getMonthData(year, month, tasks));
-  }
+    return data;
+  }, [currentMonth, baseYear, tasks]);
 
   const isToday = (date: number, monthData: MonthData, isCurrentMonth: boolean) => {
     const today = new Date();
@@ -275,10 +278,8 @@ export default function CalendarScreen() {
           
           if (currentMonthIndex >= 0 && currentMonthIndex < monthsData.length) {
             const visibleMonth = monthsData[currentMonthIndex];
-            console.log(`Scroll ${scrollY}px -> month index ${currentMonthIndex}: ${MONTHS[visibleMonth.month]} ${visibleMonth.year}`);
             
             if (visibleMonth && visibleMonth.year !== currentYear) {
-              console.log(`Updating year from ${currentYear} to ${visibleMonth.year}`);
               setCurrentYear(visibleMonth.year);
             }
           }
