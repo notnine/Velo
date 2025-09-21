@@ -50,7 +50,7 @@ export default function TasksScreen() {
       .filter(task => {
         if (!task.scheduledDate) return false;
         // Show task if it starts today OR ends today (overnight task)
-        return task.scheduledDate === today || (task.endDate && task.endDate === today);
+        return task.scheduledDate === today || (task.endDate && task.endDate === today && task.endDate !== task.scheduledDate);
       })
       .sort((a, b) => {
         // Sort by start time if available, otherwise keep original order

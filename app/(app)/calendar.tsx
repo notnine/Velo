@@ -8,7 +8,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Dimensions,
 } from 'react-native';
 import { Text, IconButton, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -70,7 +69,8 @@ const getMonthData = (year: number, month: number, tasks: Task[]): MonthData => 
         tasksForDate.push(task);
       }
     }
-    if (task.endDate && task.endDate.startsWith(monthStr)) {
+    // Only add to endDate if it's different from scheduledDate (multi-day tasks)
+    if (task.endDate && task.endDate.startsWith(monthStr) && task.endDate !== task.scheduledDate) {
       const tasksForDate = taskMap.get(task.endDate);
       if (tasksForDate) {
         tasksForDate.push(task);
@@ -159,7 +159,6 @@ export default function CalendarScreen() {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isDayDetailVisible, setIsDayDetailVisible] = useState(false);
-  const [dayDetailKey, setDayDetailKey] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
   const currentMonthRef = useRef<View>(null);
   const monthRefs = useRef<(View | null)[]>(Array(25).fill(null));
@@ -293,7 +292,6 @@ export default function CalendarScreen() {
     // Always set the date and visibility - React will handle remounting
     setSelectedDate(date);
     setIsDayDetailVisible(true);
-    setDayDetailKey(prev => prev + 1);
     
     const stateUpdateEndTime = performance.now();
     
@@ -486,7 +484,6 @@ export default function CalendarScreen() {
       {/* DayDetailView - conditionally rendered */}
       {isDayDetailVisible && selectedDate && (
         <DayDetailView
-          key={dayDetailKey}
           onDismiss={handleDayDetailDismiss}
           onTaskPress={handleDayDetailTaskPress}
           date={selectedDate}

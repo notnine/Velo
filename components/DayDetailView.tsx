@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Animated } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Pressable } from 'react-native';
 import { Text, Portal, IconButton } from 'react-native-paper';
 import { Task } from '../store/taskSlice';
 
@@ -12,8 +12,9 @@ interface DayDetailViewProps {
   onDateChange?: (newDate: Date) => void;
 }
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
+// Hour grid aligned with 24-hour decimal calculation
+// Index 0 = 12 AM (0.0), Index 1 = 1 AM (1.0), ..., Index 12 = 12 PM (12.0), Index 13 = 1 PM (13.0), ..., Index 23 = 11 PM (23.0)
 const HOURS = Array.from({ length: 24 }, (_, i) => {
   const hour = i === 0 ? 12 : i > 12 ? i - 12 : i;
   const period = i >= 12 ? 'PM' : 'AM';
@@ -29,33 +30,13 @@ function DayDetailView({
   onDateChange,
 }: DayDetailViewProps) {
   const [currentDate, setCurrentDate] = useState(date);
-  
-  // Animation values
-  const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   // Update current date when date prop changes
   React.useEffect(() => {
     setCurrentDate(date);
   }, [date]);
 
-  // Slide up animation on mount only
-  React.useLayoutEffect(() => {
-    // Start slide up animation
-    Animated.parallel([
-      Animated.spring(slideAnim, {
-        toValue: 0,
-        tension: 80,
-        friction: 12,
-        useNativeDriver: true,
-      }),
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []); // Only on mount
+
 
   // Format date for task filtering
   const formatLocalDateString = (date: Date): string => {
@@ -69,18 +50,55 @@ function DayDetailView({
   const tasksForCurrentDate = tasks.filter(task => {
     if (!task.scheduledDate) return false;
     const currentDateStr = formatLocalDateString(currentDate);
-    return task.scheduledDate === currentDateStr || (task.endDate && task.endDate === currentDateStr);
+    return task.scheduledDate === currentDateStr || (task.endDate && task.endDate === currentDateStr && task.endDate !== task.scheduledDate);
   });
 
-  // Get tasks for specific hour
-  const getTasksForHour = (hour: number) => {
-    return tasksForCurrentDate.filter(task => {
-      if (!task.startTime) return false;
-      const taskHour = parseInt(task.startTime.match(/(\d+):/)?.[1] || '0');
-      const taskPeriod = task.startTime.includes('PM') ? 'PM' : 'AM';
-      const normalizedTaskHour = taskPeriod && taskHour !== 12 ? taskHour + 12 : taskHour;
-      return normalizedTaskHour === hour;
-    });
+  // Parse time string to get hours and minutes as decimals
+  const parseTimeToDecimal = (timeStr: string) => {
+    if (!timeStr) return 0;
+    
+    const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+    if (!match) return 0;
+    
+    let hours = parseInt(match[1]);
+    const minutes = parseInt(match[2]);
+    const period = match[3].toUpperCase();
+    
+    if (period === 'PM' && hours !== 12) hours += 12;
+    if (period === 'AM' && hours === 12) hours = 0;
+    
+    return hours + minutes / 60;
+  };
+
+  // Get all tasks with Apple Calendar-style positioning
+  const getAllTasksWithPositioning = () => {
+    // Hour rows have minHeight: 60 + paddingVertical: 20 = 80px total height
+    const hourHeight = 80;
+    
+    return tasksForCurrentDate.map(task => {
+      if (!task.startTime || !task.endTime) return null;
+      
+      const startDecimal = parseTimeToDecimal(task.startTime);
+      const endDecimal = parseTimeToDecimal(task.endTime);
+      
+      
+      // Calculate position relative to the top of the scroll view
+      // Each hour row is 80px tall, so position = decimalHour * 80px
+      const topPosition = startDecimal * hourHeight;
+      const height = (endDecimal - startDecimal) * hourHeight;
+      
+      return {
+        task,
+        style: {
+          position: 'absolute' as const,
+          top: topPosition,
+          height: height,
+          left: 80, // Width of hour label + margin
+          right: 20, // Right margin
+          zIndex: 1,
+        }
+      };
+    }).filter(Boolean);
   };
 
   // Format header date
@@ -106,29 +124,21 @@ function DayDetailView({
     onDateChange?.(newDate);
   };
 
-  // Slide down animation on dismiss
+  // Direct dismiss without animation
   const handleDismiss = () => {
-    Animated.parallel([
-      Animated.spring(slideAnim, {
-        toValue: SCREEN_HEIGHT,
-        tension: 80,
-        friction: 12,
-        useNativeDriver: true,
-      }),
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      onDismiss();
-    });
+    onDismiss();
   };
 
   return (
     <Portal>
-      <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
-        <Animated.View style={[styles.modal, { transform: [{ translateY: slideAnim }] }]}>
+      <View style={styles.overlay}>
+        {/* Invisible overlay for tap-to-dismiss */}
+        <TouchableOpacity 
+          style={styles.overlayTouchable} 
+          onPress={handleDismiss}
+          activeOpacity={1}
+        />
+        <View style={styles.modal}>
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerTop}>
@@ -160,35 +170,39 @@ function DayDetailView({
           </View>
 
           {/* Content */}
-          <ScrollView style={styles.content}>
-            {HOURS.map(({ hour, period }, index) => {
-              const hourTasks = getTasksForHour(index);
-              return (
-                <View key={index} style={styles.hourRow}>
-                  <View style={styles.hourLabel}>
-                    <Text style={styles.hourText}>{hour}</Text>
-                    <Text style={styles.periodText}>{period}</Text>
+          <ScrollView 
+            style={styles.content}
+            showsVerticalScrollIndicator={true}
+            bounces={true}
+            scrollEventThrottle={16}
+          >
+            <View style={styles.timelineContainer}>
+              {/* Hour grid background */}
+              {HOURS.map(({ hour, period }, index) => (
+                  <View key={index} style={styles.hourRow}>
+                    <View style={styles.hourLabel}>
+                      <Text style={styles.hourText}>{hour}</Text>
+                      <Text style={styles.periodText}>{period}</Text>
+                    </View>
+                    <View style={styles.tasksContainer} />
                   </View>
-                  <View style={styles.tasksContainer}>
-                    {hourTasks.map((task, taskIndex) => (
-                      <TouchableOpacity
-                        key={taskIndex}
-                        style={styles.taskItem}
-                        onPress={() => onTaskPress(task)}
-                      >
-                        <Text style={styles.taskTitle}>{task.title}</Text>
-                        {task.startTime && (
-                          <Text style={styles.taskTime}>{task.startTime}</Text>
-                        )}
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-              );
-            })}
+                ))}
+              
+              {/* Task blocks with precise positioning */}
+              {getAllTasksWithPositioning().map(({ task, style }, index) => (
+                <TouchableOpacity
+                  key={task.id}
+                  style={[styles.taskItem, style]}
+                  onPress={() => onTaskPress(task)}
+                >
+                  <Text style={styles.taskTitle} numberOfLines={1}>{task.title}</Text>
+                  <Text style={styles.taskTime}>{task.startTime} - {task.endTime}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </ScrollView>
-        </Animated.View>
-      </Animated.View>
+        </View>
+      </View>
     </Portal>
   );
 }
@@ -203,11 +217,20 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
+  overlayTouchable: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    zIndex: 1,
+  },
   modal: {
     backgroundColor: 'white',
-    height: SCREEN_HEIGHT * 0.8,
+    height: '80%',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+    zIndex: 2,
   },
   header: {
     padding: 20,
@@ -237,12 +260,16 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
+  timelineContainer: {
+    position: 'relative',
+  },
   hourRow: {
     flexDirection: 'row',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
+    minHeight: 60,
   },
   hourLabel: {
     width: 60,
@@ -261,22 +288,26 @@ const styles = StyleSheet.create({
   tasksContainer: {
     flex: 1,
     marginLeft: 20,
+    position: 'relative',
+    minHeight: 60,
   },
   taskItem: {
-    backgroundColor: '#F8F9FA',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 8,
+    backgroundColor: '#007AFF',
+    padding: 8,
+    borderRadius: 6,
+    borderLeftWidth: 3,
+    borderLeftColor: '#0056CC',
   },
   taskTitle: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
-    color: '#333',
-    marginBottom: 4,
+    color: 'white',
+    marginBottom: 2,
   },
   taskTime: {
-    fontSize: 12,
-    color: '#666',
+    fontSize: 10,
+    color: 'white',
+    opacity: 0.8,
   },
 });
 
