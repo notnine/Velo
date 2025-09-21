@@ -154,7 +154,6 @@ export default function CalendarScreen() {
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   
   // Memoize tasks to ensure stable reference
-  const stableTasks = useMemo(() => tasks, [tasks]);
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
@@ -196,7 +195,7 @@ export default function CalendarScreen() {
       }
       
       const monthStartTime = performance.now();
-      data.push(getMonthData(year, month, stableTasks));
+      data.push(getMonthData(year, month, tasks));
       const monthEndTime = performance.now();
       console.log('[Calendar] 📅 MONTH CALCULATION - Month:', i, 'Time:', monthEndTime - monthStartTime, 'ms');
     }
@@ -204,7 +203,7 @@ export default function CalendarScreen() {
     const calendarEndTime = performance.now();
     console.log('[Calendar] 🗓️ CALENDAR CALCULATION END - Total Time:', calendarEndTime - calendarStartTime, 'ms');
     return data;
-  }, [currentMonth, baseYear, stableTasks]);
+  }, [currentMonth, baseYear, tasks]);
 
   const isToday = (date: number, monthData: MonthData, isCurrentMonth: boolean) => {
     const today = new Date();
@@ -286,10 +285,11 @@ export default function CalendarScreen() {
   const handleDayPress = useCallback((date: Date, monthData: MonthData) => {
     const tapStartTime = performance.now();
     console.log('[Calendar] 🎯 TAP START - handleDayPress called with date:', date.toISOString(), 'Time:', tapStartTime);
+    console.log('[Calendar] 🔍 CURRENT STATE - selectedDate:', selectedDate?.toISOString(), 'isDayDetailVisible:', isDayDetailVisible);
     
     const stateUpdateStartTime = performance.now();
     
-    // React 18 automatically batches these state updates
+    // Always set the date and visibility, even if it's the same date
     setSelectedDate(date);
     setIsDayDetailVisible(true);
     
@@ -300,7 +300,7 @@ export default function CalendarScreen() {
     
     // Store timing for DayDetailView to use
     (global as any).tapStartTime = tapStartTime;
-  }, []);
+  }, [selectedDate, isDayDetailVisible]);
 
   const handleDateChange = useCallback((newDate: Date) => {
     setSelectedDate(newDate);
@@ -329,24 +329,15 @@ export default function CalendarScreen() {
     return (date: Date) => {
       if (!date) return [];
       const dateStr = formatLocalDateString(date);
-      return stableTasks.filter(task => {
+      return tasks.filter(task => {
         // Show task if it starts on this date OR ends on this date (overnight task)
         return task.scheduledDate === dateStr || (task.endDate && task.endDate === dateStr);
       });
     };
-  }, [stableTasks]);
+  }, [tasks]);
 
 
 
-  // Create a stable date object that doesn't change unless we want it to
-  const stableSelectedDate = useMemo(() => {
-    return selectedDate || stableDate;
-  }, [selectedDate]);
-
-  // Create stable month string
-  const stableMonth = useMemo(() => {
-    return selectedDate ? MONTHS[selectedDate.getMonth()] : MONTHS[0];
-  }, [selectedDate]);
 
   // Scroll to current month title directly
   useEffect(() => {
@@ -490,27 +481,18 @@ export default function CalendarScreen() {
         />
       )}
 
-      {/* Cached DayDetailView - created once at startup, instant display */}
-      {(() => {
-        console.log('[Calendar] Rendering CACHED DayDetailView - selectedDate:', selectedDate?.toISOString() || 'null', 'isDayDetailVisible:', isDayDetailVisible);
-        return null;
-      })()}
-      <DayDetailView
-        key="cached-day-detail-view" // Stable key
-        visible={isDayDetailVisible && !!selectedDate}
-        onDismiss={handleDayDetailDismiss}
-        onTaskPress={handleDayDetailTaskPress}
-        date={stableSelectedDate}
-        tasks={stableTasks}
-        month={stableMonth}
-        onDateChange={handleDateChange}
-      />
-      {(() => {
-        if (isDayDetailVisible && selectedDate) {
-          console.log('[Calendar] 🔍 DayDetailView PROPS DEBUG - selectedDate:', selectedDate.toISOString(), 'month:', stableMonth, 'tasks count:', stableTasks.length);
-        }
-        return null;
-      })()}
+      {/* DayDetailView - conditionally rendered */}
+      {isDayDetailVisible && selectedDate && (
+        <DayDetailView
+          key={selectedDate.toISOString()} // Force re-render when date changes
+          onDismiss={handleDayDetailDismiss}
+          onTaskPress={handleDayDetailTaskPress}
+          date={selectedDate}
+          tasks={tasks}
+          month={MONTHS[selectedDate.getMonth()]}
+          onDateChange={handleDateChange}
+        />
+      )}
     </SafeAreaView>
   );
 }

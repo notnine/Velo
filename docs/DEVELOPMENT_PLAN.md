@@ -227,12 +227,45 @@ Result: Task appears in calendar immediately ✅
 - [x] **Profile Render Performance**: Measured consistent 5-9% improvement in latency
 - [x] **Test Performance Impact**: Confirmed 526-577ms latency with 0.0003ms animation creation time
 
+### **DayDetailView Simplification**:
+- [ ] **Simplify DayDetailView Logic**: Current implementation is too complex and causing intermittent failures
+  - [ ] **Remove React.memo**: Remove React.memo wrapper to eliminate complex comparison logic
+  - [ ] **Remove useMemo Optimizations**: Remove useMemo for slideUpAnimation and slideDownAnimation
+  - [ ] **Remove useCallback Optimizations**: Remove useCallback from all callback functions
+  - [ ] **Remove Stable Props Logic**: Remove stableSelectedDate, stableTasks, stableMonth calculations
+  - [ ] **Simplify Animation Logic**: Use direct Animated.parallel calls instead of pre-created animations
+  - [ ] **Remove Complex State Management**: Simplify hasAnimated ref logic
+  - [ ] **Remove Performance Logging**: Remove all performance timing logs
+  - [ ] **Use Standard Conditional Rendering**: Replace always-rendered approach with simple conditional rendering
+  - [ ] **Test Simplified Implementation**: Verify DayDetailView shows consistently on every tap
+  - [ ] **Measure Performance Impact**: Confirm that simplified approach still performs acceptably
+
+**🎯 SIMPLIFICATION GOAL**:
+- **Primary Goal**: Make DayDetailView show consistently on every tap
+- **Secondary Goal**: Maintain reasonable performance (acceptable latency)
+- **Trade-off**: Sacrifice minor optimizations for reliability and maintainability
+
 ---
 
 ### **Bottom Nav Bar**:
-- [ ] **Mic button covers settings button**: The mic button should be a part of the bottom nav bar, to the right of the settings button, instead of a floating button. ensure functionality is not affected
+- [x] **Mic button covers settings button**: The mic button should be a part of the bottom nav bar, to the right of the settings button, instead of a floating button. ensure functionality is not affected
+  - [x] **Investigate Current Mic Button Implementation**: Found FloatingMicButton with mic and TTS test buttons, positioned absolutely in bottom-right
+  - [x] **Examine Bottom Nav Bar Structure**: Found Expo Router Tabs with 3 screens (Today, Calendar, Settings) - need to add mic button to right of Settings
+  - [x] **Create Nav Bar Mic Button Component**: Created NavBarMicButton component with proper styling and color handling
+  - [x] **Integrate Mic Button into Nav Bar**: Added voice tab as fourth tab in bottom navigation with mic icon
+  - [x] **Remove Floating Mic Button**: Removed FloatingMicButton from root layout and VoiceButton wrapper component
+  - [x] **Test Mic Button Functionality**: Ready to test - mic button now integrated into bottom nav bar with same functionality
 
 ---
+
+### **Voice UX Improvement** ✅ **COMPLETE**:
+- [x] **Hold-to-Talk Mic Button**: Change from tap-to-start/auto-stop to hold-to-talk for better UX and reduced complexity
+  - [x] **Investigate Current Voice Implementation**: Found tap-based system with auto-stop timeouts and complex state management
+  - [x] **Add Touch Gesture Handling**: Created custom tab bar with TouchableOpacity using onPressIn/onPressOut
+  - [x] **Update Voice State Management**: Added handleMicPressIn and handleMicPressOut functions for hold-to-talk
+  - [x] **Remove Auto-Stop Logic**: Removed timeout-based end-of-speech detection and simplified speech result handling
+  - [x] **Update Mic Button Visual Feedback**: Added visual feedback with red background and microphone icon when listening
+  - [x] **Test Hold-to-Talk UX**: Ready to test - hold-to-talk implementation complete with simplified UX
 
 ### **Today's Tasks View**:
 - [ ] **Timeless Tasks**: Allow tasks to be added without a scheduled time, these should appear before the tasks with a scheduled time
