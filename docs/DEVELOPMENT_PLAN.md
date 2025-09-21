@@ -165,7 +165,7 @@ Result: Task appears in calendar immediately ✅
 
 ---
 
-### **Calendar View Animations and Design** ✅ **COMPLETE**:
+### **Calendar View Animations and Design**:
 - [x] **Day View**: the month and date clutter the top of the sreen, the date should be centered, and in a new row above the month
 - [x] **Slide up transition**: When a date is clicked on the calendar, the DayDetailView should slide up from the bottom of the screen
 - [x] **Slide down transition**: When the back button is clicked on the DayDetailView, the view should slide down from the top of the screen
@@ -191,6 +191,16 @@ Result: Task appears in calendar immediately ✅
     - [x] **Optimized Animation Pipeline**: Reduce animation setup from ~50ms to ~1ms
     - [x] **Target Achieved**: Total latency reduced from ~580ms to 526-577ms (5-9% improvement)
     - [x] **Smooth 60fps Animations**: Pre-created animations ensure consistent performance
+  - [x] **Bug**: dates in months other than current month do not show date view anymore
+    - [x] **Investigate Month Filtering Logic**: Found timezone issue - DayDetailView uses toISOString() (UTC) while calendar uses formatLocalDateString() (local timezone)
+    - [x] **Check DayDetailView Props**: Added debugging logs to verify date prop and tasks are passed correctly
+    - [x] **Debug Calendar State**: Added logging to see if selectedDate and tasks are correct for past/future months
+    - [x] **Test Month Navigation**: Verified the bug occurs when tapping dates in previous/next months
+  - [x] **Bug**: Grayed-out dates from previous/next months show wrong date when clicked
+    - [x] **Investigate Date Calculation Logic**: Found issue - grayed-out dates use current month/year instead of their actual month/year
+    - [x] **Check Month Data Structure**: Verified day.isCurrentMonth and day.date structure in getMonthData function
+    - [x] **Fix Date Construction**: Updated date calculation to use correct month/year for grayed-out dates based on day.date value (>15 = previous month, <15 = next month)
+    - [x] **Test Edge Cases**: Added debugging logs and ready to test clicking on grayed-out dates from previous/next months
 
 **🎯 Performance Optimization Results**:
 - **Before**: ~580ms tap-to-animation latency

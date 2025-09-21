@@ -410,7 +410,31 @@ export default function CalendarScreen() {
                         isToday(day.date, monthData, day.isCurrentMonth) && styles.todayCell
                       ]}
                       onPress={() => {
-                        const date = new Date(monthData.year, monthData.month, day.date);
+                        // Calculate correct date for grayed-out dates from previous/next months
+                        let year = monthData.year;
+                        let month = monthData.month;
+                        
+                        if (!day.isCurrentMonth) {
+                          // For grayed-out dates, we need to determine if they're from previous or next month
+                          if (day.date > 15) {
+                            // Large day numbers (like 31, 30, 29) are from previous month
+                            month = month - 1;
+                            if (month < 0) {
+                              month = 11;
+                              year = year - 1;
+                            }
+                          } else {
+                            // Small day numbers (like 1, 2, 3) are from next month
+                            month = month + 1;
+                            if (month > 11) {
+                              month = 0;
+                              year = year + 1;
+                            }
+                          }
+                        }
+                        
+                        const date = new Date(year, month, day.date);
+                        console.log('[Calendar] 🗓️ DATE CALCULATION - day.date:', day.date, 'isCurrentMonth:', day.isCurrentMonth, 'calculated date:', date.toISOString());
                         handleDayPress(date, monthData);
                       }}
                     >
@@ -481,6 +505,12 @@ export default function CalendarScreen() {
         month={stableMonth}
         onDateChange={handleDateChange}
       />
+      {(() => {
+        if (isDayDetailVisible && selectedDate) {
+          console.log('[Calendar] 🔍 DayDetailView PROPS DEBUG - selectedDate:', selectedDate.toISOString(), 'month:', stableMonth, 'tasks count:', stableTasks.length);
+        }
+        return null;
+      })()}
     </SafeAreaView>
   );
 }
