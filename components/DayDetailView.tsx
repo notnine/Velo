@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Animated } from 'react-native';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { Text, Portal, IconButton } from 'react-native-paper';
@@ -8,7 +8,7 @@ interface DayDetailViewProps {
   visible: boolean;
   onDismiss: () => void;
   onTaskPress: (task: Task) => void;
-  date: Date;
+  date: Date; // Selected date
   tasks: Task[];
   month: string;
   onDateChange?: (newDate: Date) => void;
@@ -22,7 +22,7 @@ const HOURS = Array.from({ length: 24 }, (_, i) => {
   return { hour, period };
 });
 
-export default function DayDetailView({
+const DayDetailView = React.memo(function DayDetailView({
   visible,
   onDismiss,
   onTaskPress,
@@ -31,31 +31,90 @@ export default function DayDetailView({
   month,
   onDateChange,
 }: DayDetailViewProps) {
-  console.log('[DayDetailView] Component render - visible:', visible, 'date:', date.toISOString());
-  console.log('[DayDetailView] Component instance created/remounted');
+  const componentRenderStartTime = performance.now();
+  console.log('[DayDetailView] 🎬 COMPONENT RENDER START - visible:', visible, 'date:', date.toISOString(), 'Time:', componentRenderStartTime);
   
+  // Check if this is the initial render at startup
+  if (componentRenderStartTime < 10000) { // Within first 10 seconds of app start
+    console.log('[DayDetailView] 🚀 INITIAL STARTUP RENDER - Component created at app startup');
+  } else {
+    console.log('[DayDetailView] 🔄 RUNTIME RENDER - Component re-rendered during app usage');
+  }
+  
+  // Calculate latency from tap to component render
+  if ((global as any).tapStartTime) {
+    const renderLatency = componentRenderStartTime - (global as any).tapStartTime;
+    console.log('[DayDetailView] ⏱️ RENDER LATENCY - Time from tap to render:', renderLatency, 'ms');
+  }
+  
+  const refsInitTime = performance.now();
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const hasAnimated = useRef(false);
   const [gestureEnabled, setGestureEnabled] = useState(false);
   const animationId = useRef(Math.random().toString(36).substr(2, 9)).current;
   const currentAnimation = useRef<any>(null);
+  const refsInitEndTime = performance.now();
+  console.log('[DayDetailView] 🔧 REFS INIT - Time:', refsInitEndTime - refsInitTime, 'ms');
   
   // Horizontal sliding animations
+  const stateInitTime = performance.now();
   const translateX = useRef(new Animated.Value(0)).current;
   const [currentDate, setCurrentDate] = useState(date);
   const [isAnimating, setIsAnimating] = useState(false);
+  const stateInitEndTime = performance.now();
+  console.log('[DayDetailView] 🔄 STATE INIT - Time:', stateInitEndTime - stateInitTime, 'ms');
 
-  // Update current date when prop changes
+  // Update current date when date prop changes
   useEffect(() => {
+    console.log('[DayDetailView] 📅 DATE PROP CHANGED - from:', currentDate.toISOString(), 'to:', date.toISOString());
     setCurrentDate(date);
   }, [date]);
 
-  // Simple animation on visibility change
-  useEffect(() => {
-    console.log('[DayDetailView] useEffect triggered - visible:', visible, 'hasAnimated:', hasAnimated.current);
+  // Pre-create animation configurations for instant execution
+  const slideUpAnimation = useMemo(() => Animated.parallel([
+    Animated.spring(slideAnim, {
+      toValue: 0,
+      tension: 80,
+      friction: 12,
+      useNativeDriver: true,
+    }),
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 200,
+      useNativeDriver: true,
+    }),
+  ]), [slideAnim, fadeAnim]);
+
+  const slideDownAnimation = useMemo(() => Animated.parallel([
+    Animated.spring(slideAnim, {
+      toValue: SCREEN_HEIGHT,
+      tension: 80,
+      friction: 12,
+      useNativeDriver: true,
+    }),
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }),
+  ]), [slideAnim, fadeAnim]);
+
+  // Optimized animation on visibility change - useLayoutEffect for immediate execution
+  useLayoutEffect(() => {
+    const effectStartTime = performance.now();
+    console.log('[DayDetailView] 🎭 USELAYOUTEFFECT TRIGGERED - visible:', visible, 'hasAnimated:', hasAnimated.current, 'Time:', effectStartTime);
+    
     if (visible && !hasAnimated.current) {
-      console.log('[DayDetailView] Starting slide up animation - ID:', animationId);
+      const animationStartTime = performance.now();
+      console.log('[DayDetailView] 🚀 ANIMATION START - Starting slide up animation - ID:', animationId, 'Time:', animationStartTime);
+      
+      // Calculate total latency from tap to animation start
+      if ((global as any).tapStartTime) {
+        const totalLatency = animationStartTime - (global as any).tapStartTime;
+        console.log('[DayDetailView] ⏱️ TOTAL LATENCY - Time from tap to animation start:', totalLatency, 'ms');
+      }
+      
       hasAnimated.current = true;
       
       // Cancel any existing animation
@@ -63,22 +122,16 @@ export default function DayDetailView({
         currentAnimation.current.stop();
       }
       
-      currentAnimation.current = Animated.parallel([
-        Animated.spring(slideAnim, {
-          toValue: 0,
-          tension: 80,
-          friction: 12,
-          useNativeDriver: true,
-        }),
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-      ]);
+      const animationCreateTime = performance.now();
+      // Use pre-created animation for instant execution
+      currentAnimation.current = slideUpAnimation;
+      
+      const animationStartCallTime = performance.now();
+      console.log('[DayDetailView] ⚡ ANIMATION CREATE TIME - Time to create animation:', animationStartCallTime - animationCreateTime, 'ms');
       
       currentAnimation.current.start(() => {
-        console.log('[DayDetailView] Slide up animation completed - ID:', animationId);
+        const animationCompleteTime = performance.now();
+        console.log('[DayDetailView] ✅ ANIMATION COMPLETE - Slide up animation completed - ID:', animationId, 'Time:', animationCompleteTime);
         // Enable gestures after animation completes
         setGestureEnabled(true);
         currentAnimation.current = null;
@@ -96,7 +149,7 @@ export default function DayDetailView({
       slideAnim.setValue(SCREEN_HEIGHT);
       fadeAnim.setValue(0);
     }
-  }, [visible]);
+  }, [visible, slideUpAnimation]);
 
   // Cleanup effect to cancel animations on unmount
   useEffect(() => {
@@ -109,8 +162,8 @@ export default function DayDetailView({
     };
   }, []);
 
-  // Navigation functions
-  const navigateToPreviousDay = () => {
+  // Navigation functions - memoized to prevent recreation
+  const navigateToPreviousDay = useCallback(() => {
     if (isAnimating) return;
     setIsAnimating(true);
     
@@ -138,9 +191,9 @@ export default function DayDetailView({
         setIsAnimating(false);
       });
     });
-  };
+  }, [isAnimating, currentDate, onDateChange, translateX]);
 
-  const navigateToNextDay = () => {
+  const navigateToNextDay = useCallback(() => {
     if (isAnimating) return;
     setIsAnimating(true);
     
@@ -168,15 +221,17 @@ export default function DayDetailView({
         setIsAnimating(false);
       });
     });
-  };
+  }, [isAnimating, currentDate, onDateChange, translateX]);
 
-  // Gesture handler
-  const onGestureEvent = Animated.event(
-    [{ nativeEvent: { translationX: translateX } }],
-    { useNativeDriver: true }
+  // Gesture handler - memoized to prevent recreation
+  const onGestureEvent = useMemo(() => 
+    Animated.event(
+      [{ nativeEvent: { translationX: translateX } }],
+      { useNativeDriver: true }
+    ), [translateX]
   );
 
-  const onHandlerStateChange = (event: any) => {
+  const onHandlerStateChange = useCallback((event: any) => {
     if (event.nativeEvent.state === State.END) {
       const { translationX, velocityX } = event.nativeEvent;
       
@@ -198,9 +253,10 @@ export default function DayDetailView({
         }).start();
       }
     }
-  };
-  // Custom dismiss function that handles slide down animation
-  const handleDismiss = () => {
+  }, [navigateToPreviousDay, navigateToNextDay, translateX]);
+
+  // Custom dismiss function that handles slide down animation - memoized
+  const handleDismiss = useCallback(() => {
     console.log('[DayDetailView] handleDismiss called - ID:', animationId, 'Stack trace:', new Error().stack);
     
     // Cancel any existing animation
@@ -208,37 +264,27 @@ export default function DayDetailView({
       currentAnimation.current.stop();
     }
     
-    currentAnimation.current = Animated.parallel([
-      Animated.spring(slideAnim, {
-        toValue: SCREEN_HEIGHT,
-        tension: 80,
-        friction: 12,
-        useNativeDriver: true,
-      }),
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]);
+    // Use pre-created slide down animation for instant execution
+    currentAnimation.current = slideDownAnimation;
     
     currentAnimation.current.start(() => {
       console.log('[DayDetailView] Slide down animation completed, calling onDismiss - ID:', animationId);
       currentAnimation.current = null;
       onDismiss();
     });
-  };
+  }, [animationId, slideDownAnimation, onDismiss]);
 
-  const formatHeaderDate = () => {
+  const formatHeaderDate = useMemo(() => {
     const weekday = currentDate.toLocaleDateString('en-US', { weekday: 'long' });
     const month = currentDate.toLocaleDateString('en-US', { month: 'long' });
     const day = currentDate.getDate();
     const year = currentDate.getFullYear();
     
     return `${weekday} — ${month} ${day}, ${year}`;
-  };
+  }, [currentDate]);
 
   // Memoize tasks for current date to avoid filtering on every render
+  const memoizedCalcTime = performance.now();
   const tasksForCurrentDate = useMemo(() => {
     const currentDateStr = currentDate.toISOString().split('T')[0];
     return tasks.filter(task => {
@@ -246,6 +292,8 @@ export default function DayDetailView({
       return task.scheduledDate === currentDateStr || (task.endDate && task.endDate === currentDateStr);
     });
   }, [tasks, currentDate]);
+  const memoizedCalcEndTime = performance.now();
+  console.log('[DayDetailView] 🧮 MEMOIZED CALC - Time:', memoizedCalcEndTime - memoizedCalcTime, 'ms');
 
   const getTasksForHour = (hour: number) => {
     return tasksForCurrentDate.filter(task => {
@@ -257,12 +305,33 @@ export default function DayDetailView({
     });
   };
 
-  console.log('[DayDetailView] Render check - visible:', visible);
-  if (!visible) {
-    console.log('[DayDetailView] Not rendering - visible is false');
-    return null;
+  const renderCheckTime = performance.now();
+  console.log('[DayDetailView] 🎨 RENDER CHECK - visible:', visible, 'Time:', renderCheckTime);
+  
+  // Calculate latency from tap to render check
+  if ((global as any).tapStartTime) {
+    const renderCheckLatency = renderCheckTime - (global as any).tapStartTime;
+    console.log('[DayDetailView] ⏱️ RENDER CHECK LATENCY - Time from tap to render check:', renderCheckLatency, 'ms');
   }
-  console.log('[DayDetailView] Rendering modal');
+  
+  if (!visible) {
+    console.log('[DayDetailView] Component mounted but not visible - returning hidden view');
+    // Return a hidden view that takes no space but keeps the component mounted
+    return (
+      <View style={{ 
+        position: 'absolute', 
+        left: -9999, 
+        top: -9999, 
+        width: 1, 
+        height: 1,
+        opacity: 0,
+        pointerEvents: 'none'
+      }} />
+    );
+  }
+  
+  const jsxCreationTime = performance.now();
+  console.log('[DayDetailView] 🎬 RENDERING MODAL - Starting modal render');
 
   return (
     <Portal>
@@ -293,7 +362,7 @@ export default function DayDetailView({
             >
               <View style={styles.header}>
               <View style={styles.headerTop}>
-                <Text style={styles.headerDate}>{formatHeaderDate()}</Text>
+                <Text style={styles.headerDate}>{formatHeaderDate}</Text>
               </View>
               <View style={styles.headerBottom}>
                   <TouchableOpacity onPress={() => {
@@ -355,7 +424,27 @@ export default function DayDetailView({
       </Animated.View>
     </Portal>
   );
-}
+  
+  const jsxCreationEndTime = performance.now();
+  console.log('[DayDetailView] 🎨 JSX CREATION - Time:', jsxCreationEndTime - jsxCreationTime, 'ms');
+  
+  const componentRenderEndTime = performance.now();
+  console.log('[DayDetailView] 🎬 COMPONENT RENDER END - Total Time:', componentRenderEndTime - componentRenderStartTime, 'ms');
+}, (prevProps, nextProps) => {
+  // Custom comparison function for React.memo
+  // Only re-render if visible state changes or date changes significantly
+  const visibleChanged = prevProps.visible !== nextProps.visible;
+  const dateChanged = prevProps.date.getTime() !== nextProps.date.getTime();
+  const tasksChanged = prevProps.tasks !== nextProps.tasks;
+  const monthChanged = prevProps.month !== nextProps.month;
+  
+  // Re-render if any of these critical props changed
+  const shouldRerender = visibleChanged || dateChanged || tasksChanged || monthChanged;
+  
+  console.log('[DayDetailView] 🔍 MEMO COMPARISON - visible:', visibleChanged, 'date:', dateChanged, 'tasks:', tasksChanged, 'month:', monthChanged, 'shouldRerender:', shouldRerender);
+  
+  return !shouldRerender; // Return true to skip re-render, false to re-render
+});
 
 const styles = StyleSheet.create({
   overlay: {
@@ -472,4 +561,6 @@ const styles = StyleSheet.create({
   bottomPadding: {
     height: 44,
   },
-}); 
+});
+
+export default DayDetailView; 
