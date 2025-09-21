@@ -2,7 +2,7 @@
  * Calendar screen that will show tasks organized by date. This screen helps users
  * view and manage their scheduled tasks in a calendar format.
  */
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -152,6 +152,9 @@ const TaskSnippet = ({ task, onPress }: { task: Task; onPress: () => void }) => 
 export default function CalendarScreen() {
   const tasks = useSelector((state: RootState) => state.tasks.items);
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  
+  // Memoize tasks to ensure stable reference
+  const stableTasks = useMemo(() => tasks, [tasks]);
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
@@ -160,6 +163,8 @@ export default function CalendarScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const currentMonthRef = useRef<View>(null);
   const monthRefs = useRef<(View | null)[]>(Array(25).fill(null));
+  const stableDate = useRef(new Date(2025, 0, 1)).current; // Stable date for when no selection
+  
   const theme = useTheme();
   const dispatch = useDispatch();
 
@@ -191,7 +196,7 @@ export default function CalendarScreen() {
       }
       
       const monthStartTime = performance.now();
-      data.push(getMonthData(year, month, tasks));
+      data.push(getMonthData(year, month, stableTasks));
       const monthEndTime = performance.now();
       console.log('[Calendar] 📅 MONTH CALCULATION - Month:', i, 'Time:', monthEndTime - monthStartTime, 'ms');
     }
@@ -199,7 +204,7 @@ export default function CalendarScreen() {
     const calendarEndTime = performance.now();
     console.log('[Calendar] 🗓️ CALENDAR CALCULATION END - Total Time:', calendarEndTime - calendarStartTime, 'ms');
     return data;
-  }, [currentMonth, baseYear, tasks]);
+  }, [currentMonth, baseYear, stableTasks]);
 
   const isToday = (date: number, monthData: MonthData, isCurrentMonth: boolean) => {
     const today = new Date();
@@ -209,7 +214,7 @@ export default function CalendarScreen() {
            isCurrentMonth; // Only highlight if it's actually in the current month
   };
 
-  const handleSubmit = (title: string, description: string, startDate: Date, endDate: Date) => {
+  const handleSubmit = useCallback((title: string, description: string, startDate: Date, endDate: Date) => {
     if (selectedTask) {
       dispatch(updateTask({
         id: selectedTask.id,
@@ -227,60 +232,121 @@ export default function CalendarScreen() {
       }));
     }
     setIsAddModalVisible(false);
-  };
+  }, [selectedTask, dispatch]);
 
-  const handleTaskPress = (task: Task) => {
+  const handleTaskPress = useCallback((task: Task) => {
     setSelectedTask(task);
     setIsEditModalVisible(true);
-  };
+  }, []);
 
-  const handleEditTask = () => {
+  const handleEditTask = useCallback(() => {
     if (selectedTask) {
       setIsEditModalVisible(false);
       setIsAddModalVisible(true);
     }
-  };
+  }, [selectedTask]);
 
-  const handleDeleteTask = () => {
+  const handleDeleteTask = useCallback(() => {
     if (selectedTask) {
       dispatch(deleteTask(selectedTask.id));
       setIsEditModalVisible(false);
       setSelectedTask(null);
     }
-  };
+  }, [selectedTask, dispatch]);
 
-  const handleDayPress = (date: Date, monthData: MonthData) => {
+  const handleScroll = useCallback((e: any) => {
+    const scrollY = e.nativeEvent.contentOffset.y;
+    
+    // Each month is roughly: title (40px) + 6 weeks * 80px + margin (24px) = ~544px
+    const estimatedMonthHeight = 544;
+    const currentMonthIndex = Math.round(scrollY / estimatedMonthHeight);
+    
+    if (currentMonthIndex >= 0 && currentMonthIndex < monthsData.length) {
+      const visibleMonth = monthsData[currentMonthIndex];
+      
+      if (visibleMonth && visibleMonth.year !== currentYear) {
+        setCurrentYear(visibleMonth.year);
+      }
+    }
+  }, [monthsData, currentYear]);
+
+  const handleAddModalPress = useCallback(() => {
+    setIsAddModalVisible(true);
+  }, []);
+
+  const handleAddModalDismiss = useCallback(() => {
+    setIsAddModalVisible(false);
+  }, []);
+
+  const handleEditModalDismiss = useCallback(() => {
+    setIsEditModalVisible(false);
+    setSelectedTask(null);
+  }, []);
+
+  const handleDayPress = useCallback((date: Date, monthData: MonthData) => {
     const tapStartTime = performance.now();
     console.log('[Calendar] 🎯 TAP START - handleDayPress called with date:', date.toISOString(), 'Time:', tapStartTime);
-    console.log('[Calendar] Current selectedDate:', selectedDate?.toISOString() || 'null');
-    console.log('[Calendar] Current isDayDetailVisible:', isDayDetailVisible);
     
     const stateUpdateStartTime = performance.now();
+    
+    // React 18 automatically batches these state updates
     setSelectedDate(date);
     setIsDayDetailVisible(true);
+    
     const stateUpdateEndTime = performance.now();
     
     console.log('[Calendar] ⚡ STATE UPDATE - Time:', stateUpdateEndTime - stateUpdateStartTime, 'ms');
-    console.log('[Calendar] State updates queued');
+    console.log('[Calendar] State updates queued (React 18 auto-batching)');
     
     // Store timing for DayDetailView to use
     (global as any).tapStartTime = tapStartTime;
-  };
+  }, []);
 
-  const handleDateChange = (newDate: Date) => {
+  const handleDateChange = useCallback((newDate: Date) => {
     setSelectedDate(newDate);
-  };
+  }, []);
+
+  // Memoize callback functions to prevent remounting - these are stable and won't change
+  const handleDayDetailDismiss = useCallback(() => {
+    console.log('[Calendar] DayDetailView onDismiss called');
+    
+    // React 18 automatically batches these state updates
+    setIsDayDetailVisible(false);
+    setSelectedDate(null);
+  }, []);
+
+  const handleDayDetailTaskPress = useCallback((task: Task) => {
+    console.log('[Calendar] DayDetailView onTaskPress called');
+    
+    // React 18 automatically batches these state updates
+    setIsDayDetailVisible(false);
+    setSelectedDate(null);
+    setSelectedTask(task);
+    setIsEditModalVisible(true);
+  }, []);
 
   const getTasksForDate = useMemo(() => {
     return (date: Date) => {
       if (!date) return [];
       const dateStr = formatLocalDateString(date);
-      return tasks.filter(task => {
+      return stableTasks.filter(task => {
         // Show task if it starts on this date OR ends on this date (overnight task)
         return task.scheduledDate === dateStr || (task.endDate && task.endDate === dateStr);
       });
     };
-  }, [tasks]);
+  }, [stableTasks]);
+
+
+
+  // Create a stable date object that doesn't change unless we want it to
+  const stableSelectedDate = useMemo(() => {
+    return selectedDate || stableDate;
+  }, [selectedDate]);
+
+  // Create stable month string
+  const stableMonth = useMemo(() => {
+    return selectedDate ? MONTHS[selectedDate.getMonth()] : MONTHS[0];
+  }, [selectedDate]);
 
   // Scroll to current month title directly
   useEffect(() => {
@@ -307,7 +373,7 @@ export default function CalendarScreen() {
         <View style={styles.headerRight}>
           <IconButton
             icon="plus"
-            onPress={() => setIsAddModalVisible(true)}
+            onPress={handleAddModalPress}
           />
         </View>
       </View>
@@ -321,21 +387,7 @@ export default function CalendarScreen() {
       <ScrollView
         ref={scrollViewRef}
         showsVerticalScrollIndicator={false}
-        onScroll={(e) => {
-          const scrollY = e.nativeEvent.contentOffset.y;
-          
-          // Each month is roughly: title (40px) + 6 weeks * 80px + margin (24px) = ~544px
-          const estimatedMonthHeight = 544;
-          const currentMonthIndex = Math.round(scrollY / estimatedMonthHeight);
-          
-          if (currentMonthIndex >= 0 && currentMonthIndex < monthsData.length) {
-            const visibleMonth = monthsData[currentMonthIndex];
-            
-            if (visibleMonth && visibleMonth.year !== currentYear) {
-              setCurrentYear(visibleMonth.year);
-            }
-          }
-        }}
+        onScroll={handleScroll}
         scrollEventThrottle={16}
       >
         {monthsData.map((monthData, monthIndex) => (
@@ -393,7 +445,7 @@ export default function CalendarScreen() {
       {/* Only render AddTaskModal when isAddModalVisible is true */}
       {isAddModalVisible && (
         <AddTaskModal
-          onDismiss={() => setIsAddModalVisible(false)}
+          onDismiss={handleAddModalDismiss}
           onSubmit={handleSubmit}
           editTask={selectedTask || undefined}
         />
@@ -402,10 +454,7 @@ export default function CalendarScreen() {
       {selectedTask && (
         <TaskDetailsModal
           visible={isEditModalVisible}
-          onDismiss={() => {
-            setIsEditModalVisible(false);
-            setSelectedTask(null);
-          }}
+          onDismiss={handleEditModalDismiss}
           onEdit={handleEditTask}
           onDelete={handleDeleteTask}
           task={selectedTask}
@@ -417,24 +466,19 @@ export default function CalendarScreen() {
         />
       )}
 
-      {/* Pre-mounted DayDetailView - always rendered, visibility controlled by props */}
-      {console.log('[Calendar] Rendering DayDetailView - selectedDate:', selectedDate?.toISOString() || 'null', 'isDayDetailVisible:', isDayDetailVisible)}
+      {/* Cached DayDetailView - created once at startup, instant display */}
+      {(() => {
+        console.log('[Calendar] Rendering CACHED DayDetailView - selectedDate:', selectedDate?.toISOString() || 'null', 'isDayDetailVisible:', isDayDetailVisible);
+        return null;
+      })()}
       <DayDetailView
+        key="cached-day-detail-view" // Stable key
         visible={isDayDetailVisible && !!selectedDate}
-        onDismiss={() => {
-          console.log('[Calendar] DayDetailView onDismiss called');
-          setIsDayDetailVisible(false);
-          setSelectedDate(null);
-        }}
-        onTaskPress={(task) => {
-          console.log('[Calendar] DayDetailView onTaskPress called');
-          setIsDayDetailVisible(false);
-          setSelectedDate(null);
-          handleTaskPress(task);
-        }}
-        date={selectedDate || new Date()}
-        tasks={tasks} // Pass all tasks, component will filter by date
-        month={selectedDate ? MONTHS[selectedDate.getMonth()] : MONTHS[new Date().getMonth()]}
+        onDismiss={handleDayDetailDismiss}
+        onTaskPress={handleDayDetailTaskPress}
+        date={stableSelectedDate}
+        tasks={stableTasks}
+        month={stableMonth}
         onDateChange={handleDateChange}
       />
     </SafeAreaView>
