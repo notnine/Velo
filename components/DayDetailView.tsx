@@ -1,13 +1,12 @@
-import React, { useEffect, useLayoutEffect, useRef, useState, useMemo } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Animated } from 'react-native';
-import { PanGestureHandler, State } from 'react-native-gesture-handler';
+import React, { useState } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { Text, Portal, IconButton } from 'react-native-paper';
 import { Task } from '../store/taskSlice';
 
 interface DayDetailViewProps {
   onDismiss: () => void;
   onTaskPress: (task: Task) => void;
-  date: Date; // Selected date
+  date: Date;
   tasks: Task[];
   month: string;
   onDateChange?: (newDate: Date) => void;
@@ -29,193 +28,14 @@ function DayDetailView({
   month,
   onDateChange,
 }: DayDetailViewProps) {
-  
-  const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const [gestureEnabled, setGestureEnabled] = useState(false);
-  const animationId = useRef(Math.random().toString(36).substr(2, 9)).current;
-  const currentAnimation = useRef<any>(null);
-  
-  // Horizontal sliding animations
-  const translateX = useRef(new Animated.Value(0)).current;
   const [currentDate, setCurrentDate] = useState(date);
-  const [isAnimating, setIsAnimating] = useState(false);
 
   // Update current date when date prop changes
-  useEffect(() => {
+  React.useEffect(() => {
     setCurrentDate(date);
   }, [date]);
 
-
-  // Start slide up animation when component mounts
-  useLayoutEffect(() => {
-    // Cancel any existing animation
-    if (currentAnimation.current) {
-      currentAnimation.current.stop();
-    }
-    
-    // Create and start slide up animation
-    currentAnimation.current = Animated.parallel([
-      Animated.spring(slideAnim, {
-        toValue: 0,
-        tension: 80,
-        friction: 12,
-        useNativeDriver: true,
-      }),
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]);
-    
-    currentAnimation.current.start(() => {
-      setGestureEnabled(true);
-      currentAnimation.current = null;
-    });
-  }, []);
-
-  // Cleanup effect to cancel animations on unmount
-  useEffect(() => {
-    return () => {
-      if (currentAnimation.current) {
-        currentAnimation.current.stop();
-        currentAnimation.current = null;
-      }
-    };
-  }, []);
-
-  // Navigation functions
-  const navigateToPreviousDay = () => {
-    if (isAnimating) return;
-    setIsAnimating(true);
-    
-    const newDate = new Date(currentDate);
-    newDate.setDate(newDate.getDate() - 1);
-    
-    // Update date immediately for better UX
-    setCurrentDate(newDate);
-    onDateChange?.(newDate);
-    
-    // Animate slide to right
-    Animated.timing(translateX, {
-      toValue: 300,
-      duration: 200,
-      useNativeDriver: true,
-    }).start(() => {
-      translateX.setValue(-300);
-      
-      // Animate slide in from left
-      Animated.timing(translateX, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }).start(() => {
-        setIsAnimating(false);
-      });
-    });
-  };
-
-  const navigateToNextDay = () => {
-    if (isAnimating) return;
-    setIsAnimating(true);
-    
-    const newDate = new Date(currentDate);
-    newDate.setDate(newDate.getDate() + 1);
-    
-    // Update date immediately for better UX
-    setCurrentDate(newDate);
-    onDateChange?.(newDate);
-    
-    // Animate slide to left
-    Animated.timing(translateX, {
-      toValue: -300,
-      duration: 200,
-      useNativeDriver: true,
-    }).start(() => {
-      translateX.setValue(300);
-      
-      // Animate slide in from right
-      Animated.timing(translateX, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }).start(() => {
-        setIsAnimating(false);
-      });
-    });
-  };
-
-  // Gesture handler - memoized to prevent recreation
-  const onGestureEvent = useMemo(() => 
-    Animated.event(
-      [{ nativeEvent: { translationX: translateX } }],
-      { useNativeDriver: true }
-    ), [translateX]
-  );
-
-  const onHandlerStateChange = (event: any) => {
-    if (event.nativeEvent.state === State.END) {
-      const { translationX, velocityX } = event.nativeEvent;
-      
-      // Determine if swipe is significant enough
-      const threshold = 50;
-      const velocityThreshold = 500;
-      
-      if (translationX > threshold || velocityX > velocityThreshold) {
-        // Swipe right - go to previous day
-        navigateToPreviousDay();
-      } else if (translationX < -threshold || velocityX < -velocityThreshold) {
-        // Swipe left - go to next day
-        navigateToNextDay();
-      } else {
-        // Snap back to center
-        Animated.spring(translateX, {
-          toValue: 0,
-          useNativeDriver: true,
-        }).start();
-      }
-    }
-  };
-
-  // Custom dismiss function that handles slide down animation
-  const handleDismiss = () => {
-    // Cancel any existing animation
-    if (currentAnimation.current) {
-      currentAnimation.current.stop();
-    }
-    
-    // Create slide down animation directly
-    currentAnimation.current = Animated.parallel([
-      Animated.spring(slideAnim, {
-        toValue: SCREEN_HEIGHT,
-        tension: 80,
-        friction: 12,
-        useNativeDriver: true,
-      }),
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]);
-    
-    currentAnimation.current.start(() => {
-      currentAnimation.current = null;
-      onDismiss();
-    });
-  };
-
-  const formatHeaderDate = useMemo(() => {
-    const weekday = currentDate.toLocaleDateString('en-US', { weekday: 'long' });
-    const month = currentDate.toLocaleDateString('en-US', { month: 'long' });
-    const day = currentDate.getDate();
-    const year = currentDate.getFullYear();
-    
-    return `${weekday} — ${month} ${day}, ${year}`;
-  }, [currentDate]);
-
-  // Helper function to format date in local timezone (matches calendar.tsx)
+  // Format date for task filtering
   const formatLocalDateString = (date: Date): string => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -223,118 +43,113 @@ function DayDetailView({
     return `${year}-${month}-${day}`;
   };
 
-  // Memoize tasks for current date to avoid filtering on every render
-  const tasksForCurrentDate = useMemo(() => {
+  // Filter tasks for current date
+  const tasksForCurrentDate = tasks.filter(task => {
+    if (!task.scheduledDate) return false;
     const currentDateStr = formatLocalDateString(currentDate);
-    return tasks.filter(task => {
-      if (!task.scheduledDate) return false;
-      const matches = task.scheduledDate === currentDateStr || (task.endDate && task.endDate === currentDateStr);
-      return matches;
-    });
-  }, [tasks, currentDate]);
+    return task.scheduledDate === currentDateStr || (task.endDate && task.endDate === currentDateStr);
+  });
 
+  // Get tasks for specific hour
   const getTasksForHour = (hour: number) => {
     return tasksForCurrentDate.filter(task => {
       if (!task.startTime) return false;
       const taskHour = parseInt(task.startTime.match(/(\d+):/)?.[1] || '0');
-      const taskPeriod = task.startTime.includes('PM');
+      const taskPeriod = task.startTime.includes('PM') ? 'PM' : 'AM';
       const normalizedTaskHour = taskPeriod && taskHour !== 12 ? taskHour + 12 : taskHour;
       return normalizedTaskHour === hour;
     });
   };
 
+  // Format header date
+  const formatHeaderDate = () => {
+    const weekday = currentDate.toLocaleDateString('en-US', { weekday: 'long' });
+    const month = currentDate.toLocaleDateString('en-US', { month: 'long' });
+    const day = currentDate.getDate();
+    return `${weekday}, ${month} ${day}`;
+  };
+
+  // Navigation functions
+  const navigateToPreviousDay = () => {
+    const newDate = new Date(currentDate);
+    newDate.setDate(newDate.getDate() - 1);
+    setCurrentDate(newDate);
+    onDateChange?.(newDate);
+  };
+
+  const navigateToNextDay = () => {
+    const newDate = new Date(currentDate);
+    newDate.setDate(newDate.getDate() + 1);
+    setCurrentDate(newDate);
+    onDateChange?.(newDate);
+  };
 
   return (
     <Portal>
-      <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
-        <Animated.View 
-          style={[
-            styles.modalContainer,
-            {
-              transform: [{ translateY: slideAnim }]
-            }
-          ]}
-        >
-          <PanGestureHandler
-            onGestureEvent={onGestureEvent}
-            onHandlerStateChange={onHandlerStateChange}
-            activeOffsetX={[-50, 50]}
-            failOffsetY={[-20, 20]}
-            shouldCancelWhenOutside={false}
-            enabled={gestureEnabled}
-          >
-            <Animated.View 
-              style={[
-                styles.container,
-                {
-                  transform: [{ translateX }]
-                }
-              ]}
-            >
-              <View style={styles.header}>
-              <View style={styles.headerTop}>
-                <Text style={styles.headerDate}>{formatHeaderDate}</Text>
-              </View>
-              <View style={styles.headerBottom}>
-                  <TouchableOpacity onPress={() => {
-                    handleDismiss();
-                  }} style={styles.backButton}>
-                  <IconButton
-                    icon="chevron-left"
-                    size={24}
-                    iconColor="#FF3B30"
-                    style={styles.backIcon}
-                  />
-                  <Text style={styles.monthText}>{month}</Text>
-                </TouchableOpacity>
-              </View>
+      <View style={styles.overlay}>
+        <View style={styles.modal}>
+          {/* Header */}
+          <View style={styles.header}>
+            <View style={styles.headerTop}>
+              <Text style={styles.headerDate}>{formatHeaderDate()}</Text>
             </View>
+            <View style={styles.headerBottom}>
+              <TouchableOpacity onPress={onDismiss} style={styles.backButton}>
+                <IconButton
+                  icon="chevron-left"
+                  size={24}
+                  iconColor="#FF3B30"
+                />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={navigateToPreviousDay} style={styles.navButton}>
+                <IconButton
+                  icon="chevron-left"
+                  size={24}
+                  iconColor="#666"
+                />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={navigateToNextDay} style={styles.navButton}>
+                <IconButton
+                  icon="chevron-right"
+                  size={24}
+                  iconColor="#666"
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
 
-            <ScrollView 
-              style={styles.scrollView}
-              showsVerticalScrollIndicator={false}
-            >
-              {HOURS.map((time, index) => {
-                const tasksForThisHour = getTasksForHour(index);
-                return (
-                  <View key={index} style={styles.hourRow}>
-                    <View style={styles.hourLabelContainer}>
-                      <Text style={styles.hourLabel}>
-                        {time.hour}<Text style={styles.periodText}> {time.period}</Text>
-                      </Text>
-                    </View>
-                    <View style={styles.hourContent}>
-                      <View style={styles.hourLine} />
-                      {tasksForThisHour.map((task) => (
-                        <TouchableOpacity
-                          key={task.id}
-                          style={[
-                            styles.taskItem,
-                            { backgroundColor: task.completed ? '#666' : '#6750A4' }
-                          ]}
-                          onPress={() => onTaskPress(task)}
-                        >
-                          <Text style={styles.taskTitle} numberOfLines={1}>
-                            {task.title}
-                          </Text>
-                          <Text style={styles.taskTime}>
-                            {task.startTime} - {task.endTime}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
+          {/* Content */}
+          <ScrollView style={styles.content}>
+            {HOURS.map(({ hour, period }, index) => {
+              const hourTasks = getTasksForHour(index);
+              return (
+                <View key={index} style={styles.hourRow}>
+                  <View style={styles.hourLabel}>
+                    <Text style={styles.hourText}>{hour}</Text>
+                    <Text style={styles.periodText}>{period}</Text>
                   </View>
-                );
-              })}
-              <View style={styles.bottomPadding} />
-            </ScrollView>
-            </Animated.View>
-          </PanGestureHandler>
-        </Animated.View>
-      </Animated.View>
+                  <View style={styles.tasksContainer}>
+                    {hourTasks.map((task, taskIndex) => (
+                      <TouchableOpacity
+                        key={taskIndex}
+                        style={styles.taskItem}
+                        onPress={() => onTaskPress(task)}
+                      >
+                        <Text style={styles.taskTitle}>{task.title}</Text>
+                        {task.startTime && (
+                          <Text style={styles.taskTime}>{task.startTime}</Text>
+                        )}
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              );
+            })}
+          </ScrollView>
+        </View>
+      </View>
     </Portal>
   );
-  
 }
 
 const styles = StyleSheet.create({
@@ -344,114 +159,84 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
-  modalContainer: {
+  modal: {
     backgroundColor: 'white',
-    height: SCREEN_HEIGHT * 0.9,
+    height: SCREEN_HEIGHT * 0.8,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
   },
-  container: {
-    flex: 1,
-    backgroundColor: 'white',
-  },
   header: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
-    backgroundColor: 'white',
+    borderBottomColor: '#E5E5E5',
   },
   headerTop: {
     alignItems: 'center',
-    marginBottom: 8,
-  },
-  headerBottom: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  backButton: {
-    width: 100,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  backIcon: {
-    margin: 0,
-    marginLeft: -8,
-  },
-  monthText: {
-    fontSize: 17,
-    color: '#FF3B30',
-    marginLeft: -8,
+    marginBottom: 10,
   },
   headerDate: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#000',
-    textAlign: 'center',
+    fontWeight: 'bold',
+    color: '#333',
   },
-  headerRight: {
-    width: 80,
+  headerBottom: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  scrollView: {
+  backButton: {
+    marginLeft: -10,
+  },
+  navButton: {
+    marginHorizontal: 10,
+  },
+  content: {
     flex: 1,
-    backgroundColor: 'white',
   },
   hourRow: {
     flexDirection: 'row',
-    minHeight: 44,
-  },
-  hourLabelContainer: {
-    width: 65,
-    alignItems: 'flex-end',
-    paddingTop: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
   },
   hourLabel: {
-    fontSize: 13,
-    color: '#8E8E93',
-    paddingRight: 12,
+    width: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  hourText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
   },
   periodText: {
-    fontSize: 13,
-    color: '#8E8E93',
+    fontSize: 12,
+    color: '#666',
   },
-  hourContent: {
+  tasksContainer: {
     flex: 1,
-    minHeight: 44,
-    paddingLeft: 12,
-    paddingRight: 16,
-    position: 'relative',
-  },
-  hourLine: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 15,
-    height: 0.5,
-    backgroundColor: '#E5E5EA',
+    marginLeft: 20,
   },
   taskItem: {
-    marginVertical: 2,
-    padding: 8,
-    borderRadius: 6,
-    minHeight: 44,
+    backgroundColor: '#F8F9FA',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
   },
   taskTitle: {
-    color: '#fff',
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '500',
+    color: '#333',
+    marginBottom: 4,
   },
   taskTime: {
-    color: '#fff',
-    fontSize: 13,
-    opacity: 0.8,
-    marginTop: 2,
-  },
-  bottomPadding: {
-    height: 44,
+    fontSize: 12,
+    color: '#666',
   },
 });
 
-export default DayDetailView; 
+export default DayDetailView;
