@@ -283,13 +283,26 @@ const DayDetailView = React.memo(function DayDetailView({
     return `${weekday} — ${month} ${day}, ${year}`;
   }, [currentDate]);
 
+  // Helper function to format date in local timezone (matches calendar.tsx)
+  const formatLocalDateString = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   // Memoize tasks for current date to avoid filtering on every render
   const memoizedCalcTime = performance.now();
   const tasksForCurrentDate = useMemo(() => {
-    const currentDateStr = currentDate.toISOString().split('T')[0];
+    const currentDateStr = formatLocalDateString(currentDate);
+    console.log('[DayDetailView] 🔍 DATE FILTERING - currentDate:', currentDate.toISOString(), 'formatted:', currentDateStr, 'tasks count:', tasks.length);
     return tasks.filter(task => {
       if (!task.scheduledDate) return false;
-      return task.scheduledDate === currentDateStr || (task.endDate && task.endDate === currentDateStr);
+      const matches = task.scheduledDate === currentDateStr || (task.endDate && task.endDate === currentDateStr);
+      if (matches) {
+        console.log('[DayDetailView] ✅ TASK MATCH - task:', task.title, 'scheduledDate:', task.scheduledDate, 'endDate:', task.endDate);
+      }
+      return matches;
     });
   }, [tasks, currentDate]);
   const memoizedCalcEndTime = performance.now();
