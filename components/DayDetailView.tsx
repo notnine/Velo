@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Animated } from 'react-native';
 import { Text, Portal, IconButton } from 'react-native-paper';
 import { Task } from '../store/taskSlice';
 
@@ -29,11 +29,33 @@ function DayDetailView({
   onDateChange,
 }: DayDetailViewProps) {
   const [currentDate, setCurrentDate] = useState(date);
+  
+  // Animation values
+  const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   // Update current date when date prop changes
   React.useEffect(() => {
     setCurrentDate(date);
   }, [date]);
+
+  // Slide up animation on mount only
+  React.useLayoutEffect(() => {
+    // Start slide up animation
+    Animated.parallel([
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        tension: 80,
+        friction: 12,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []); // Only on mount
 
   // Format date for task filtering
   const formatLocalDateString = (date: Date): string => {
@@ -84,17 +106,36 @@ function DayDetailView({
     onDateChange?.(newDate);
   };
 
+  // Slide down animation on dismiss
+  const handleDismiss = () => {
+    Animated.parallel([
+      Animated.spring(slideAnim, {
+        toValue: SCREEN_HEIGHT,
+        tension: 80,
+        friction: 12,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      onDismiss();
+    });
+  };
+
   return (
     <Portal>
-      <View style={styles.overlay}>
-        <View style={styles.modal}>
+      <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
+        <Animated.View style={[styles.modal, { transform: [{ translateY: slideAnim }] }]}>
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerTop}>
               <Text style={styles.headerDate}>{formatHeaderDate()}</Text>
             </View>
             <View style={styles.headerBottom}>
-              <TouchableOpacity onPress={onDismiss} style={styles.backButton}>
+              <TouchableOpacity onPress={handleDismiss} style={styles.backButton}>
                 <IconButton
                   icon="chevron-left"
                   size={24}
@@ -146,8 +187,8 @@ function DayDetailView({
               );
             })}
           </ScrollView>
-        </View>
-      </View>
+        </Animated.View>
+      </Animated.View>
     </Portal>
   );
 }

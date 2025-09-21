@@ -159,6 +159,7 @@ export default function CalendarScreen() {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isDayDetailVisible, setIsDayDetailVisible] = useState(false);
+  const [dayDetailKey, setDayDetailKey] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
   const currentMonthRef = useRef<View>(null);
   const monthRefs = useRef<(View | null)[]>(Array(25).fill(null));
@@ -289,9 +290,10 @@ export default function CalendarScreen() {
     
     const stateUpdateStartTime = performance.now();
     
-    // Always set the date and visibility, even if it's the same date
+    // Always set the date and visibility - React will handle remounting
     setSelectedDate(date);
     setIsDayDetailVisible(true);
+    setDayDetailKey(prev => prev + 1);
     
     const stateUpdateEndTime = performance.now();
     
@@ -300,7 +302,7 @@ export default function CalendarScreen() {
     
     // Store timing for DayDetailView to use
     (global as any).tapStartTime = tapStartTime;
-  }, [selectedDate, isDayDetailVisible]);
+  }, []);
 
   const handleDateChange = useCallback((newDate: Date) => {
     setSelectedDate(newDate);
@@ -484,7 +486,7 @@ export default function CalendarScreen() {
       {/* DayDetailView - conditionally rendered */}
       {isDayDetailVisible && selectedDate && (
         <DayDetailView
-          key={selectedDate.toISOString()} // Force re-render when date changes
+          key={dayDetailKey}
           onDismiss={handleDayDetailDismiss}
           onTaskPress={handleDayDetailTaskPress}
           date={selectedDate}
