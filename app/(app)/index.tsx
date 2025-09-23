@@ -12,17 +12,21 @@ import { Task, addTask, toggleTask, deleteTask, updateTask } from '../store/task
 import TaskItem from '../../components/TaskItem';
 import AddTaskModal from '../../components/AddTaskModal';
 
+// Helper function to format date in local timezone (avoids UTC conversion issues)
+const formatLocalDateString = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const isSameDay = (date1: string, date2: string) => {
-  const d1 = new Date(date1);
-  const d2 = new Date(date2);
-  return d1.getFullYear() === d2.getFullYear() &&
-         d1.getMonth() === d2.getMonth() &&
-         d1.getDate() === d2.getDate();
+  return date1 === date2;
 };
 
 const formatDate = (date: Date): string => {
   const today = new Date();
-  if (isSameDay(date.toISOString(), today.toISOString())) {
+  if (isSameDay(formatLocalDateString(date), formatLocalDateString(today))) {
     return 'Today';
   }
   return date.toLocaleDateString('en-US', { 
@@ -41,12 +45,12 @@ export default function TasksScreen() {
 
   // Filter tasks for today and sort by start time
   const todaysTasks = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = formatLocalDateString(new Date());
     return tasks
       .filter(task => {
         if (!task.scheduledDate) return false;
         // Show task if it starts today OR ends today (overnight task)
-        return task.scheduledDate === today || (task.endDate && task.endDate === today);
+        return task.scheduledDate === today || (task.endDate && task.endDate === today && task.endDate !== task.scheduledDate);
       })
       .sort((a, b) => {
         // Sort by start time if available, otherwise keep original order

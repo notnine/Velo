@@ -6,8 +6,10 @@
 ## ✨ Project Overview
 Velo is a minimalist task management application that seamlessly blends an intuitive user experience with AI-powered scheduling capabilities. Built with a philosophy of intentional simplicity, Velo features a streamlined mobile-first frontend and a backend designed to handle essential logic with minimal complexity.
 
+**First Release Focus**: Reliability over polish - ensuring 100% functional core features before adding visual enhancements.
+
 The app revolves around three core views:
-- **Home View**: Today’s tasks and quick calendar overview
+- **Home View**: Today's tasks and quick calendar overview
 - **Calendar View**: Full calendar visualization of scheduled tasks
 - **Settings View**: User preferences and basic account management
 
@@ -19,6 +21,7 @@ The app revolves around three core views:
 - 🧠 AI-assisted task scheduling powered by OpenAI
 - 🗣️ Voice-to-text task input using native device tools
 - 🗃️ Local task persistence with Redux + AsyncStorage
+- ⚡ Instant, reliable UI interactions (no complex animations)
 
 ---
 
@@ -27,6 +30,7 @@ The app revolves around three core views:
 - Backend foundations built for future API, database, and auth expansion
 - Three primary screens: Home, Calendar, Settings
 - Frontend handles only UI — no business logic processed on-device
+- **Reliability-first approach**: 100% functional core features before visual polish
 
 ---
 
@@ -35,10 +39,11 @@ The app revolves around three core views:
   - Pure display components, using device-native inputs
   - Minimal Redux state management for local persistence
   - No embedded business logic
+  - **No complex animations** - instant, reliable UI interactions
 
 - **Backend: Simple but Smart**  
   - Basic CRUD operations structured in FastAPI
-  - AI scheduling tasks delegated to OpenAI’s API
+  - AI scheduling tasks delegated to OpenAI's API
   - Minimal business logic, clean API endpoints
   - Supabase integration planned for authentication and storage (not active yet)
 
@@ -101,6 +106,7 @@ velo/
 ---
 
 ## 📈 Success Metrics
+- **100% reliable core functionality** - every feature works consistently
 - Smooth and intuitive task management experience
 - Fast response times and lightweight app behavior
 - Clean, maintainable, and modular codebase
@@ -129,9 +135,11 @@ velo/
 - Background AI task optimization services
 - Production-level hosting (AWS/GCP)
 - Enhanced voice-to-task natural language input
+- **Add smooth animations** - once core functionality is rock-solid
 
 ---
 
 # 🎯 Philosophy
 **Minimalistic but powerful.**  
-**Frontend simplicity + Backend smartness = User delight.**
+**Frontend simplicity + Backend smartness = User delight.**  
+**Reliability first, polish second.**

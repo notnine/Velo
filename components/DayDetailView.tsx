@@ -1,223 +1,314 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
-import { Text, Portal, Modal, IconButton } from 'react-native-paper';
+import React, { useState } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Pressable } from 'react-native';
+import { Text, Portal, IconButton } from 'react-native-paper';
 import { Task } from '../store/taskSlice';
 
 interface DayDetailViewProps {
-  visible: boolean;
   onDismiss: () => void;
   onTaskPress: (task: Task) => void;
   date: Date;
   tasks: Task[];
   month: string;
+  onDateChange?: (newDate: Date) => void;
 }
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
+// Hour grid aligned with 24-hour decimal calculation
+// Index 0 = 12 AM (0.0), Index 1 = 1 AM (1.0), ..., Index 12 = 12 PM (12.0), Index 13 = 1 PM (13.0), ..., Index 23 = 11 PM (23.0)
 const HOURS = Array.from({ length: 24 }, (_, i) => {
   const hour = i === 0 ? 12 : i > 12 ? i - 12 : i;
   const period = i >= 12 ? 'PM' : 'AM';
   return { hour, period };
 });
 
-export default function DayDetailView({
-  visible,
+function DayDetailView({
   onDismiss,
   onTaskPress,
   date,
   tasks,
   month,
+  onDateChange,
 }: DayDetailViewProps) {
-  const formatHeaderDate = () => {
-    return date.toLocaleDateString('en-US', {
-      weekday: 'long',
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
+  const [currentDate, setCurrentDate] = useState(date);
+
+  // Update current date when date prop changes
+  React.useEffect(() => {
+    setCurrentDate(date);
+  }, [date]);
+
+
+
+  // Format date for task filtering
+  const formatLocalDateString = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
-  const getTasksForHour = (hour: number) => {
-    return tasks.filter(task => {
-      if (!task.startTime) return false;
-      const taskHour = parseInt(task.startTime.match(/(\d+):/)?.[1] || '0');
-      const taskPeriod = task.startTime.includes('PM');
-      const normalizedTaskHour = taskPeriod && taskHour !== 12 ? taskHour + 12 : taskHour;
-      return normalizedTaskHour === hour;
-    });
+  // Filter tasks for current date
+  const tasksForCurrentDate = tasks.filter(task => {
+    if (!task.scheduledDate) return false;
+    const currentDateStr = formatLocalDateString(currentDate);
+    return task.scheduledDate === currentDateStr || (task.endDate && task.endDate === currentDateStr && task.endDate !== task.scheduledDate);
+  });
+
+  // Parse time string to get hours and minutes as decimals
+  const parseTimeToDecimal = (timeStr: string) => {
+    if (!timeStr) return 0;
+    
+    const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+    if (!match) return 0;
+    
+    let hours = parseInt(match[1]);
+    const minutes = parseInt(match[2]);
+    const period = match[3].toUpperCase();
+    
+    if (period === 'PM' && hours !== 12) hours += 12;
+    if (period === 'AM' && hours === 12) hours = 0;
+    
+    return hours + minutes / 60;
+  };
+
+  // Get all tasks with Apple Calendar-style positioning
+  const getAllTasksWithPositioning = () => {
+    // Hour rows have minHeight: 60 + paddingVertical: 20 = 80px total height
+    const hourHeight = 80;
+    
+    return tasksForCurrentDate.map(task => {
+      if (!task.startTime || !task.endTime) return null;
+      
+      const startDecimal = parseTimeToDecimal(task.startTime);
+      const endDecimal = parseTimeToDecimal(task.endTime);
+      
+      
+      // Calculate position relative to the top of the scroll view
+      // Each hour row is 80px tall, so position = decimalHour * 80px
+      const topPosition = startDecimal * hourHeight;
+      const height = (endDecimal - startDecimal) * hourHeight;
+      
+      return {
+        task,
+        style: {
+          position: 'absolute' as const,
+          top: topPosition,
+          height: height,
+          left: 80, // Width of hour label + margin
+          right: 20, // Right margin
+          zIndex: 1,
+        }
+      };
+    }).filter(Boolean);
+  };
+
+  // Format header date
+  const formatHeaderDate = () => {
+    const weekday = currentDate.toLocaleDateString('en-US', { weekday: 'long' });
+    const month = currentDate.toLocaleDateString('en-US', { month: 'long' });
+    const day = currentDate.getDate();
+    return `${weekday}, ${month} ${day}`;
+  };
+
+  // Navigation functions
+  const navigateToPreviousDay = () => {
+    const newDate = new Date(currentDate);
+    newDate.setDate(newDate.getDate() - 1);
+    setCurrentDate(newDate);
+    onDateChange?.(newDate);
+  };
+
+  const navigateToNextDay = () => {
+    const newDate = new Date(currentDate);
+    newDate.setDate(newDate.getDate() + 1);
+    setCurrentDate(newDate);
+    onDateChange?.(newDate);
+  };
+
+  // Direct dismiss without animation
+  const handleDismiss = () => {
+    onDismiss();
   };
 
   return (
     <Portal>
-      <Modal
-        visible={visible}
-        onDismiss={onDismiss}
-        contentContainerStyle={styles.modalContainer}
-      >
-        <View style={styles.container}>
+      <View style={styles.overlay}>
+        {/* Invisible overlay for tap-to-dismiss */}
+        <TouchableOpacity 
+          style={styles.overlayTouchable} 
+          onPress={handleDismiss}
+          activeOpacity={1}
+        />
+        <View style={styles.modal}>
+          {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity onPress={onDismiss} style={styles.backButton}>
-              <IconButton
-                icon="chevron-left"
-                size={24}
-                iconColor="#FF3B30"
-                style={styles.backIcon}
-              />
-              <Text style={styles.monthText}>{month}</Text>
-            </TouchableOpacity>
-            <Text style={styles.headerDate}>{formatHeaderDate()}</Text>
-            <View style={styles.headerRight} />
+            <View style={styles.headerTop}>
+              <Text style={styles.headerDate}>{formatHeaderDate()}</Text>
+            </View>
+            <View style={styles.headerBottom}>
+              <TouchableOpacity onPress={handleDismiss} style={styles.backButton}>
+                <IconButton
+                  icon="chevron-left"
+                  size={24}
+                  iconColor="#FF3B30"
+                />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={navigateToPreviousDay} style={styles.navButton}>
+                <IconButton
+                  icon="chevron-left"
+                  size={24}
+                  iconColor="#666"
+                />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={navigateToNextDay} style={styles.navButton}>
+                <IconButton
+                  icon="chevron-right"
+                  size={24}
+                  iconColor="#666"
+                />
+              </TouchableOpacity>
+            </View>
           </View>
 
+          {/* Content */}
           <ScrollView 
-            style={styles.scrollView}
-            showsVerticalScrollIndicator={false}
+            style={styles.content}
+            showsVerticalScrollIndicator={true}
+            bounces={true}
+            scrollEventThrottle={16}
           >
-            {HOURS.map((time, index) => {
-              const tasksForThisHour = getTasksForHour(index);
-              return (
-                <View key={index} style={styles.hourRow}>
-                  <View style={styles.hourLabelContainer}>
-                    <Text style={styles.hourLabel}>
-                      {time.hour}<Text style={styles.periodText}> {time.period}</Text>
-                    </Text>
+            <View style={styles.timelineContainer}>
+              {/* Hour grid background */}
+              {HOURS.map(({ hour, period }, index) => (
+                  <View key={index} style={styles.hourRow}>
+                    <View style={styles.hourLabel}>
+                      <Text style={styles.hourText}>{hour}</Text>
+                      <Text style={styles.periodText}>{period}</Text>
+                    </View>
+                    <View style={styles.tasksContainer} />
                   </View>
-                  <View style={styles.hourContent}>
-                    <View style={styles.hourLine} />
-                    {tasksForThisHour.map((task) => (
-                      <TouchableOpacity
-                        key={task.id}
-                        style={[
-                          styles.taskItem,
-                          { backgroundColor: task.completed ? '#666' : '#6750A4' }
-                        ]}
-                        onPress={() => onTaskPress(task)}
-                      >
-                        <Text style={styles.taskTitle} numberOfLines={1}>
-                          {task.title}
-                        </Text>
-                        <Text style={styles.taskTime}>
-                          {task.startTime} - {task.endTime}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-              );
-            })}
-            <View style={styles.bottomPadding} />
+                ))}
+              
+              {/* Task blocks with precise positioning */}
+              {getAllTasksWithPositioning().map(({ task, style }, index) => (
+                <TouchableOpacity
+                  key={task.id}
+                  style={[styles.taskItem, style]}
+                  onPress={() => onTaskPress(task)}
+                >
+                  <Text style={styles.taskTitle} numberOfLines={1}>{task.title}</Text>
+                  <Text style={styles.taskTime}>{task.startTime} - {task.endTime}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </ScrollView>
         </View>
-      </Modal>
+      </View>
     </Portal>
   );
 }
 
 const styles = StyleSheet.create({
-  modalContainer: {
+  overlay: {
     position: 'absolute',
     left: 0,
     right: 0,
     top: 0,
     bottom: 0,
-    backgroundColor: 'white',
-    margin: 0,
-    padding: 0,
-    height: SCREEN_HEIGHT,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
   },
-  container: {
-    flex: 1,
-    backgroundColor: 'white',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
-    backgroundColor: 'white',
-  },
-  backButton: {
-    width: 100,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  backIcon: {
-    margin: 0,
-    marginLeft: -8,
-  },
-  monthText: {
-    fontSize: 17,
-    color: '#FF3B30',
-    marginLeft: -8,
-  },
-  headerDate: {
-    fontSize: 17,
-    fontWeight: '400',
-    color: '#000',
-    flex: 1,
-    textAlign: 'center',
-  },
-  headerRight: {
-    width: 80,
-  },
-  scrollView: {
-    flex: 1,
-    backgroundColor: 'white',
-  },
-  hourRow: {
-    flexDirection: 'row',
-    minHeight: 44,
-  },
-  hourLabelContainer: {
-    width: 65,
-    alignItems: 'flex-end',
-    paddingTop: 10,
-  },
-  hourLabel: {
-    fontSize: 13,
-    color: '#8E8E93',
-    paddingRight: 12,
-  },
-  periodText: {
-    fontSize: 13,
-    color: '#8E8E93',
-  },
-  hourContent: {
-    flex: 1,
-    minHeight: 44,
-    paddingLeft: 12,
-    paddingRight: 16,
-    position: 'relative',
-  },
-  hourLine: {
+  overlayTouchable: {
     position: 'absolute',
     left: 0,
     right: 0,
-    top: 15,
-    height: 0.5,
-    backgroundColor: '#E5E5EA',
+    top: 0,
+    bottom: 0,
+    zIndex: 1,
+  },
+  modal: {
+    backgroundColor: 'white',
+    height: '80%',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    zIndex: 2,
+  },
+  header: {
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E5',
+  },
+  headerTop: {
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  headerDate: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  headerBottom: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  backButton: {
+    marginLeft: -10,
+  },
+  navButton: {
+    marginHorizontal: 10,
+  },
+  content: {
+    flex: 1,
+  },
+  timelineContainer: {
+    position: 'relative',
+  },
+  hourRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+    minHeight: 60,
+  },
+  hourLabel: {
+    width: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  hourText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  periodText: {
+    fontSize: 12,
+    color: '#666',
+  },
+  tasksContainer: {
+    flex: 1,
+    marginLeft: 20,
+    position: 'relative',
+    minHeight: 60,
   },
   taskItem: {
-    marginVertical: 2,
+    backgroundColor: '#007AFF',
     padding: 8,
     borderRadius: 6,
-    minHeight: 44,
+    borderLeftWidth: 3,
+    borderLeftColor: '#0056CC',
   },
   taskTitle: {
-    color: '#fff',
-    fontSize: 15,
+    fontSize: 12,
     fontWeight: '500',
+    color: 'white',
+    marginBottom: 2,
   },
   taskTime: {
-    color: '#fff',
-    fontSize: 13,
+    fontSize: 10,
+    color: 'white',
     opacity: 0.8,
-    marginTop: 2,
   },
-  bottomPadding: {
-    height: 44,
-  },
-}); 
+});
+
+export default DayDetailView;

@@ -15,6 +15,14 @@ const generateUUID = () => {
   });
 };
 
+// Helper function to format date in local timezone (avoids UTC conversion issues)
+const formatLocalDateString = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export interface Task {
   id: string;
   title: string;
@@ -56,8 +64,8 @@ export const taskSlice = createSlice({
         description: action.payload.description,
         completed: false,
         createdAt: new Date().toISOString(),
-        scheduledDate: startDate.toISOString().split('T')[0],
-        endDate: endDate.toISOString().split('T')[0],
+        scheduledDate: formatLocalDateString(startDate),
+        endDate: formatLocalDateString(endDate),
         startTime: startDate.toLocaleTimeString('en-US', {
           hour: 'numeric',
           minute: '2-digit',
@@ -112,8 +120,8 @@ export const taskSlice = createSlice({
       if (task) {
         task.title = title;
         task.description = description;
-        task.scheduledDate = startDate.toISOString().split('T')[0];
-        task.endDate = endDate.toISOString().split('T')[0];
+        task.scheduledDate = formatLocalDateString(startDate);
+        task.endDate = formatLocalDateString(endDate);
         task.startTime = startDate.toLocaleTimeString('en-US', {
           hour: 'numeric',
           minute: '2-digit',
@@ -125,6 +133,9 @@ export const taskSlice = createSlice({
           hour12: true
         }).replace(/\s+/g, '');
       }
+    },
+    clearAllTasks: (state) => {
+      state.items = [];
     },
   },
   extraReducers: (builder) => {
@@ -145,5 +156,5 @@ export const taskSlice = createSlice({
   },
 });
 
-export const { addTask, updateTaskSchedule, updateTaskTime, toggleTask, deleteTask, updateTask } = taskSlice.actions;
+export const { addTask, updateTaskSchedule, updateTaskTime, toggleTask, deleteTask, updateTask, clearAllTasks } = taskSlice.actions;
 export default taskSlice.reducer; 
