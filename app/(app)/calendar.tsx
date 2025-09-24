@@ -213,14 +213,14 @@ export default function CalendarScreen() {
            isCurrentMonth; // Only highlight if it's actually in the current month
   };
 
-  const handleSubmit = useCallback((title: string, description: string, startDate: Date, endDate: Date) => {
+  const handleSubmit = useCallback((title: string, description: string, startDate?: Date, endDate?: Date) => {
     if (selectedTask) {
       dispatch(updateTask({
         id: selectedTask.id,
         title,
         description,
-        startDate,
-        endDate,
+        startDate: startDate || new Date(),
+        endDate: endDate || new Date(),
       }));
     } else {
       dispatch(addTask({

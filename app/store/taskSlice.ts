@@ -54,24 +54,28 @@ export const taskSlice = createSlice({
     addTask: (state, action: PayloadAction<{ 
       title: string; 
       description: string;
-      startDate: Date;
-      endDate: Date;
+      startDate?: Date;
+      endDate?: Date;
     }>) => {
-      const { startDate, endDate } = action.payload;
+      const { title, description, startDate, endDate } = action.payload;
+      
+      // Check if this is a timeless task (no dates provided)
+      const isTimelessTask = !startDate || !endDate;
+      
       const newTask: Task = {
         id: generateUUID(),
-        title: action.payload.title,
-        description: action.payload.description,
+        title: title,
+        description: description,
         completed: false,
         createdAt: new Date().toISOString(),
-        scheduledDate: formatLocalDateString(startDate),
-        endDate: formatLocalDateString(endDate),
-        startTime: startDate.toLocaleTimeString('en-US', {
+        scheduledDate: isTimelessTask ? null : formatLocalDateString(startDate),
+        endDate: isTimelessTask ? null : formatLocalDateString(endDate),
+        startTime: isTimelessTask ? null : startDate!.toLocaleTimeString('en-US', {
           hour: 'numeric',
           minute: '2-digit',
           hour12: true
         }).replace(/\s+/g, ''),
-        endTime: endDate.toLocaleTimeString('en-US', {
+        endTime: isTimelessTask ? null : endDate!.toLocaleTimeString('en-US', {
           hour: 'numeric',
           minute: '2-digit',
           hour12: true
