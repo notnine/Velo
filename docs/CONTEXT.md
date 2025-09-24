@@ -4,8 +4,8 @@
 Velo is a minimalist task management application that seamlessly combines intuitive user interfaces with AI-powered scheduling capabilities. At its core, Velo follows a philosophy of intentional simplicity: a streamlined frontend for effortless user interaction, complemented by a backend that handles essential business logic with minimal complexity.
 
 The application is structured around three main views:
-1. **Home View**: A unified dashboard featuring today's tasks and an at-a-glance calendar widget
-2. **Calendar View**: A comprehensive calendar interface inspired by Apple's calendar design, offering clear task visualization
+1. **Home View**: A timeless todo list for tasks without scheduled times
+2. **Calendar View**: A comprehensive calendar interface inspired by Apple's calendar design, showing only scheduled tasks
 3. **Settings View**: A centralized space for user preferences and account management
 
 ## MVP Features
@@ -38,7 +38,13 @@ Velo's MVP consists of the 3 pages. User data (tasks & preferences) are stored l
 ## Core Features
 ### Task Management
 - Create, read, update, delete tasks
-- Basic task properties only:
+- Two task types:
+  - **Timeless tasks**: No scheduled time, appear on home page
+  - **Scheduled tasks**: Have specific times, appear in calendar
+- Voice command patterns:
+  - **Timeless**: "add", "create", "remember to" + task name
+  - **Scheduled**: "schedule", "book", "plan" + task + time keywords
+- Basic task properties:
   - Title
   - Description (optional)
   - Completion status
@@ -46,12 +52,15 @@ Velo's MVP consists of the 3 pages. User data (tasks & preferences) are stored l
 
 ### Calendar
 - Simple calendar view
-- Display of scheduled tasks
-- Basic scheduling interface
+- Display of scheduled tasks only
+- Apple Calendar-style day view with precise task positioning
 
 ### Task Input
 - Regular text input using device keyboard
 - Voice input using device's built-in speech-to-text
+- Natural language voice commands:
+  - **Timeless tasks**: "add buy groceries", "create workout routine"
+  - **Scheduled tasks**: "schedule dinner at 7 PM", "book meeting tomorrow at 2"
 - No custom voice recording
 
 ## Project Structure

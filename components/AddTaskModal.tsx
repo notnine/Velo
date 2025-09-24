@@ -10,13 +10,14 @@ import { Task } from '../app/store/taskSlice';
 
 interface AddTaskModalProps {
   onDismiss: () => void;
-  onSubmit: (title: string, description: string, startDate: Date, endDate: Date) => void;
+  onSubmit: (title: string, description: string, startDate?: Date, endDate?: Date) => void;
   editTask?: Task;
 }
 
 export default function AddTaskModal({ onDismiss, onSubmit, editTask }: AddTaskModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [isTimeless, setIsTimeless] = useState(true); // Default to timeless for better UX
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date(new Date().getTime() + 60 * 60 * 1000));
   const [showStartDate, setShowStartDate] = useState(false);
@@ -35,6 +36,11 @@ export default function AddTaskModal({ onDismiss, onSubmit, editTask }: AddTaskM
     if (editTask) {
       setTitle(editTask.title);
       setDescription(editTask.description);
+      
+      // Determine if this is a timeless or scheduled task
+      const isEditTaskTimeless = !editTask.scheduledDate;
+      setIsTimeless(isEditTaskTimeless);
+      
       // Parse the scheduled date, ensuring we get the correct local date
       let taskDate = new Date();
       if (editTask.scheduledDate) {
@@ -73,6 +79,7 @@ export default function AddTaskModal({ onDismiss, onSubmit, editTask }: AddTaskM
     } else {
       setTitle('');
       setDescription('');
+      setIsTimeless(true); // Default to timeless for new tasks
       setStartDate(new Date());
       setEndDate(new Date(new Date().getTime() + 60 * 60 * 1000));
     }
@@ -84,9 +91,16 @@ export default function AddTaskModal({ onDismiss, onSubmit, editTask }: AddTaskM
 
   const handleSubmit = () => {
     if (title.trim()) {
-      onSubmit(title.trim(), description.trim(), startDate, endDate);
+      if (isTimeless) {
+        // Timeless task - no dates
+        onSubmit(title.trim(), description.trim());
+      } else {
+        // Scheduled task - with dates
+        onSubmit(title.trim(), description.trim(), startDate, endDate);
+      }
       setTitle('');
       setDescription('');
+      setIsTimeless(true);
       setStartDate(new Date());
       setEndDate(new Date(new Date().getTime() + 60 * 60 * 1000));
     }
@@ -221,63 +235,95 @@ export default function AddTaskModal({ onDismiss, onSubmit, editTask }: AddTaskM
           onSubmitEditing={handleDescriptionSubmit}
         />
 
-        <View style={styles.dateTimeContainer}>
-          <Text variant="bodyMedium" style={styles.label}>Starts</Text>
-          <View style={styles.dateTimeRow}>
+        {/* Task Type Toggle */}
+        <View style={styles.taskTypeContainer}>
+          <Text variant="bodyMedium" style={styles.taskTypeLabel}>Task Type</Text>
+          <View style={styles.toggleContainer}>
             <TouchableOpacity
-              style={styles.dateButton}
-              onPress={() => {
-                Keyboard.dismiss();
-                setShowStartDate(true);
-                setShowStartTime(false);
-                setShowEndDate(false);
-                setShowEndTime(false);
-              }}
+              style={[styles.toggleOption, isTimeless && styles.toggleOptionActive]}
+              onPress={() => setIsTimeless(true)}
             >
-              <Text variant="bodyLarge">{formatDate(startDate)}</Text>
+              <Text style={[styles.toggleText, isTimeless && styles.toggleTextActive]}>
+                📝 Todo Item
+              </Text>
+              <Text style={[styles.toggleSubtext, isTimeless && styles.toggleSubtextActive]}>
+                No specific time
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.timeButton}
-              onPress={() => {
-                Keyboard.dismiss();
-                setShowStartTime(true);
-                setShowStartDate(false);
-                setShowEndDate(false);
-                setShowEndTime(false);
-              }}
+              style={[styles.toggleOption, !isTimeless && styles.toggleOptionActive]}
+              onPress={() => setIsTimeless(false)}
             >
-              <Text variant="bodyLarge">{formatTime(startDate)}</Text>
-            </TouchableOpacity>
-          </View>
-
-          <Text variant="bodyMedium" style={[styles.label, styles.endsLabel]}>Ends</Text>
-          <View style={styles.dateTimeRow}>
-            <TouchableOpacity
-              style={styles.dateButton}
-              onPress={() => {
-                Keyboard.dismiss();
-                setShowEndDate(true);
-                setShowEndTime(false);
-                setShowStartDate(false);
-                setShowStartTime(false);
-              }}
-            >
-              <Text variant="bodyLarge">{formatDate(endDate)}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.timeButton}
-              onPress={() => {
-                Keyboard.dismiss();
-                setShowEndTime(true);
-                setShowEndDate(false);
-                setShowStartDate(false);
-                setShowStartTime(false);
-              }}
-            >
-              <Text variant="bodyLarge">{formatTime(endDate)}</Text>
+              <Text style={[styles.toggleText, !isTimeless && styles.toggleTextActive]}>
+                📅 Scheduled
+              </Text>
+              <Text style={[styles.toggleSubtext, !isTimeless && styles.toggleSubtextActive]}>
+                Specific date/time
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* Date/Time Pickers - Only show for scheduled tasks */}
+        {!isTimeless && (
+          <View style={styles.dateTimeContainer}>
+            <Text variant="bodyMedium" style={styles.label}>Starts</Text>
+            <View style={styles.dateTimeRow}>
+              <TouchableOpacity
+                style={styles.dateButton}
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setShowStartDate(true);
+                  setShowStartTime(false);
+                  setShowEndDate(false);
+                  setShowEndTime(false);
+                }}
+              >
+                <Text variant="bodyLarge">{formatDate(startDate)}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.timeButton}
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setShowStartTime(true);
+                  setShowStartDate(false);
+                  setShowEndDate(false);
+                  setShowEndTime(false);
+                }}
+              >
+                <Text variant="bodyLarge">{formatTime(startDate)}</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text variant="bodyMedium" style={[styles.label, styles.endsLabel]}>Ends</Text>
+            <View style={styles.dateTimeRow}>
+              <TouchableOpacity
+                style={styles.dateButton}
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setShowEndDate(true);
+                  setShowEndTime(false);
+                  setShowStartDate(false);
+                  setShowStartTime(false);
+                }}
+              >
+                <Text variant="bodyLarge">{formatDate(endDate)}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.timeButton}
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setShowEndTime(true);
+                  setShowEndDate(false);
+                  setShowStartDate(false);
+                  setShowStartTime(false);
+                }}
+              >
+                <Text variant="bodyLarge">{formatTime(endDate)}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
 
         {showStartDate && (
           <DateTimePicker
@@ -347,6 +393,47 @@ const styles = StyleSheet.create({
   input: {
     marginBottom: 16,
     backgroundColor: 'transparent',
+  },
+  taskTypeContainer: {
+    marginBottom: 16,
+  },
+  taskTypeLabel: {
+    marginBottom: 12,
+    fontWeight: '500',
+  },
+  toggleContainer: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  toggleOption: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: '#f5f5f5',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  toggleOptionActive: {
+    backgroundColor: '#e3f2fd',
+    borderColor: '#2196f3',
+  },
+  toggleText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#666',
+    marginBottom: 4,
+  },
+  toggleTextActive: {
+    color: '#2196f3',
+  },
+  toggleSubtext: {
+    fontSize: 12,
+    color: '#999',
+    textAlign: 'center',
+  },
+  toggleSubtextActive: {
+    color: '#1976d2',
   },
   dateTimeContainer: {
     marginBottom: 16,
