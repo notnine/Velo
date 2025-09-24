@@ -122,6 +122,13 @@
 - [x] **Update Collision Detection**: Detect direct overlaps only, not transitive overlaps
 - [x] **Test Complex Overlap Scenarios**: Verify long task + multiple short tasks layout correctly
 
+### **Multi-Day Task Time Display Consistency**:
+- [ ] **Fix Day View Time Display**: Multi-day tasks still show adjusted times (start - 11:59 PM) instead of original times
+- [ ] **Fix Calendar View Time Display**: Calendar view also shows incorrect end time (11:59 PM) for multi-day tasks on first day
+- [ ] **Investigate Task Object Modification**: Find where task times are being modified for both day view and calendar view display
+- [ ] **Preserve Original Task Data**: Ensure original task times are passed to task details modal from all views
+- [ ] **Test Multi-Day Task Consistency**: Verify time display matches across all views and shows original times everywhere
+
 ### **Voice Task Management**:
 - [ ] **Add Edit Task Action**: Add "update_task" action to backend system prompt
 - [ ] **Add Delete Task Action**: Add "delete_task" action to backend system prompt

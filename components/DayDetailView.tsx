@@ -212,7 +212,7 @@ function DayDetailView({
         const leftPosition = 80 + (columnIndex * (columnWidth + taskMargin));
         
         return {
-          task,
+          task: taskData.task, // Use original task with original times
           style: {
             position: 'absolute' as const,
             top: topPosition,
