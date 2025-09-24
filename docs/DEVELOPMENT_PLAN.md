@@ -104,6 +104,24 @@
 - [x] **Fix Single-Day Midnight Task Creation**: Single-day tasks starting at midnight now display correctly
 - [x] **Fix Day Boundary Visual Display**: Multi-day tasks now show full time until 11:59 PM on first day
 
+### **Overlapping Tasks UI/UX Enhancement** ✅ **COMPLETE**:
+- [x] **Implement Task Width Calculation**: Calculate optimal width for overlapping tasks based on overlap count
+- [x] **Add Horizontal Stacking Logic**: Stack overlapping tasks side-by-side with calculated widths
+- [x] **Create Task Collision Detection**: Detect when tasks overlap in time and group them
+- [x] **Implement Visual Hierarchy**: Use different colors/opacity for overlapping task groups
+- [x] **Add Task Truncation**: Truncate long task titles with ellipsis for narrow overlapping tasks
+- [x] **Create Expandable Task Groups**: Allow tapping to expand/collapse overlapping task groups
+- [x] **Add Task Count Indicators**: Show "+2 more" indicators for collapsed overlapping groups
+- [x] **Implement Smooth Animations**: Add subtle animations for expand/collapse interactions
+- [x] **Test Overlapping Scenarios**: Verify 3+ overlapping tasks display correctly with good UX
+
+### **Overlapping Tasks Column Optimization** ✅ **COMPLETE**:
+- [x] **Fix False Grouping Logic**: Tasks should only group if they directly overlap, not transitively
+- [x] **Implement Column-Based Layout**: Use column assignment algorithm instead of simple grouping
+- [x] **Optimize Space Utilization**: Allow non-overlapping tasks to share columns even if they overlap with other tasks
+- [x] **Update Collision Detection**: Detect direct overlaps only, not transitive overlaps
+- [x] **Test Complex Overlap Scenarios**: Verify long task + multiple short tasks layout correctly
+
 ### **Voice Task Management**:
 - [ ] **Add Edit Task Action**: Add "update_task" action to backend system prompt
 - [ ] **Add Delete Task Action**: Add "delete_task" action to backend system prompt
