@@ -50,7 +50,32 @@ function DayDetailView({
   const tasksForCurrentDate = tasks.filter(task => {
     if (!task.scheduledDate) return false;
     const currentDateStr = formatLocalDateString(currentDate);
-    return task.scheduledDate === currentDateStr || (task.endDate && task.endDate === currentDateStr && task.endDate !== task.scheduledDate);
+    
+    // Show task on its start date
+    if (task.scheduledDate === currentDateStr) {
+      // For single-day tasks (same start and end date), always show them
+      if (task.scheduledDate === task.endDate) {
+        return true;
+      }
+      // For multi-day tasks, don't show on start date if it starts at midnight
+      if (task.startTime === '12:00AM') {
+        return false;
+      }
+      return true;
+    }
+    
+    // Show task on its end date only if:
+    // 1. It has an end date different from start date (multi-day task)
+    // 2. It doesn't end at midnight (12:00AM) - edge case fix
+    if (task.endDate && task.endDate === currentDateStr && task.endDate !== task.scheduledDate) {
+      // Don't show task on end date if it ends at midnight
+      if (task.endTime === '12:00AM') {
+        return false;
+      }
+      return true;
+    }
+    
+    return false;
   });
 
   // Parse time string to get hours and minutes as decimals
@@ -81,14 +106,14 @@ function DayDetailView({
     
     // For multi-day tasks, adjust times based on which day we're viewing
     if (task.scheduledDate === currentDateStr) {
-      // First day: show from start time to midnight
-      return { startTime: task.startTime, endTime: '12:00AM' };
+      // First day: show from start time to 11:59 PM (end of day)
+      return { startTime: task.startTime, endTime: '11:59PM' };
     } else if (task.endDate === currentDateStr) {
       // Last day: show from midnight to end time
       return { startTime: '12:00AM', endTime: task.endTime };
     }
     
-    // Middle days (if any): show full day (midnight to midnight)
+    // Middle days (if any): show full day (midnight to 11:59 PM)
     return { startTime: '12:00AM', endTime: '11:59PM' };
   };
 
