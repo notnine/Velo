@@ -70,17 +70,43 @@ function DayDetailView({
     return hours + minutes / 60;
   };
 
+  // Adjust task times for multi-day tasks based on current date
+  const getAdjustedTaskTimes = (task: Task, currentDateStr: string) => {
+    if (!task.startTime || !task.endTime) return { startTime: null, endTime: null };
+    
+    // If task doesn't span multiple days, return original times
+    if (task.scheduledDate === task.endDate) {
+      return { startTime: task.startTime, endTime: task.endTime };
+    }
+    
+    // For multi-day tasks, adjust times based on which day we're viewing
+    if (task.scheduledDate === currentDateStr) {
+      // First day: show from start time to midnight
+      return { startTime: task.startTime, endTime: '12:00AM' };
+    } else if (task.endDate === currentDateStr) {
+      // Last day: show from midnight to end time
+      return { startTime: '12:00AM', endTime: task.endTime };
+    }
+    
+    // Middle days (if any): show full day (midnight to midnight)
+    return { startTime: '12:00AM', endTime: '11:59PM' };
+  };
+
   // Get all tasks with Apple Calendar-style positioning
   const getAllTasksWithPositioning = () => {
     // Hour rows have minHeight: 60 + paddingVertical: 20 = 80px total height
     const hourHeight = 80;
+    const currentDateStr = formatLocalDateString(currentDate);
     
     return tasksForCurrentDate.map(task => {
       if (!task.startTime || !task.endTime) return null;
       
-      const startDecimal = parseTimeToDecimal(task.startTime);
-      const endDecimal = parseTimeToDecimal(task.endTime);
+      // Get adjusted times for multi-day tasks
+      const { startTime, endTime } = getAdjustedTaskTimes(task, currentDateStr);
+      if (!startTime || !endTime) return null;
       
+      const startDecimal = parseTimeToDecimal(startTime);
+      const endDecimal = parseTimeToDecimal(endTime);
       
       // Calculate position relative to the top of the scroll view
       // Each hour row is 80px tall, so position = decimalHour * 80px
@@ -88,7 +114,11 @@ function DayDetailView({
       const height = (endDecimal - startDecimal) * hourHeight;
       
       return {
-        task,
+        task: {
+          ...task,
+          startTime,
+          endTime
+        },
         style: {
           position: 'absolute' as const,
           top: topPosition,

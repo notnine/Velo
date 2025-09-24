@@ -94,6 +94,12 @@
 - [x] **Update Task Creation Logic**: Handle timeless tasks in AddTaskModal
 - [x] **Test Modal Task Creation**: Verify timeless tasks appear on home page, scheduled on calendar
 
+### **Multi-Day Task Display Bug Fix** ✅ **COMPLETE**:
+- [x] **Analyze Task Time Adjustment Logic**: Create function to adjust start/end times for multi-day tasks
+- [x] **Update DayDetailView Task Filtering**: Modify task display logic to show correct time segments per day
+- [x] **Handle Day Boundary Crossings**: Ensure tasks spanning midnight display correctly on both days
+- [x] **Test Multi-Day Task Scenarios**: Verify 11 PM-4 AM tasks show 11 PM-midnight on day 1, midnight-4 AM on day 2
+
 ### **Voice Task Management**:
 - [ ] **Add Edit Task Action**: Add "update_task" action to backend system prompt
 - [ ] **Add Delete Task Action**: Add "delete_task" action to backend system prompt
