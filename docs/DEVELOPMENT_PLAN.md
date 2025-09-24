@@ -99,6 +99,10 @@
 - [x] **Update DayDetailView Task Filtering**: Modify task display logic to show correct time segments per day
 - [x] **Handle Day Boundary Crossings**: Ensure tasks spanning midnight display correctly on both days
 - [x] **Test Multi-Day Task Scenarios**: Verify 11 PM-4 AM tasks show 11 PM-midnight on day 1, midnight-4 AM on day 2
+- [x] **Fix Midnight End Edge Case**: Tasks ending at midnight (12:00AM) no longer appear on next day
+- [x] **Fix Midnight Start Edge Case**: Tasks starting at midnight (12:00AM) no longer appear on previous day
+- [x] **Fix Single-Day Midnight Task Creation**: Single-day tasks starting at midnight now display correctly
+- [x] **Fix Day Boundary Visual Display**: Multi-day tasks now show full time until 11:59 PM on first day
 
 ### **Voice Task Management**:
 - [ ] **Add Edit Task Action**: Add "update_task" action to backend system prompt
