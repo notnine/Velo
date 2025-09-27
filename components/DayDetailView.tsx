@@ -30,6 +30,7 @@ function DayDetailView({
   onDateChange,
 }: DayDetailViewProps) {
   const [currentDate, setCurrentDate] = useState(date);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
   // Update current date when date prop changes
   React.useEffect(() => {
@@ -117,13 +118,52 @@ function DayDetailView({
     return { startTime: '12:00AM', endTime: '11:59PM' };
   };
 
-  // Get all tasks with Apple Calendar-style positioning
+  // Assign tasks to columns using optimal column-based layout
+  const assignTasksToColumns = (tasks: Array<{task: Task, startDecimal: number, endDecimal: number}>) => {
+    // Sort tasks by start time
+    const sortedTasks = [...tasks].sort((a, b) => a.startDecimal - b.startDecimal);
+    
+    // Track columns and their end times
+    const columns: Array<Array<{task: Task, startDecimal: number, endDecimal: number, index: number}>> = [];
+    
+    sortedTasks.forEach((taskData, index) => {
+      // Find the first column where this task can fit (doesn't overlap with last task in column)
+      let assignedColumn = -1;
+      
+      for (let colIndex = 0; colIndex < columns.length; colIndex++) {
+        const column = columns[colIndex];
+        const lastTaskInColumn = column[column.length - 1];
+        
+        // Check if this task can fit in this column (no overlap with last task)
+        if (taskData.startDecimal >= lastTaskInColumn.endDecimal) {
+          assignedColumn = colIndex;
+          break;
+        }
+      }
+      
+      // If no existing column can fit this task, create a new column
+      if (assignedColumn === -1) {
+        assignedColumn = columns.length;
+        columns.push([]);
+      }
+      
+      // Add task to the assigned column
+      columns[assignedColumn].push({...taskData, index});
+    });
+    
+    return columns;
+  };
+
+  // Get all tasks with Apple Calendar-style positioning and overlap handling
   const getAllTasksWithPositioning = () => {
     // Hour rows have minHeight: 60 + paddingVertical: 20 = 80px total height
     const hourHeight = 80;
     const currentDateStr = formatLocalDateString(currentDate);
+    const taskContainerWidth = 300; // Available width for tasks (right margin - left margin)
+    const taskMargin = 2; // Small margin between overlapping tasks
     
-    return tasksForCurrentDate.map(task => {
+    // First, prepare all tasks with their time data
+    const tasksWithTimes = tasksForCurrentDate.map(task => {
       if (!task.startTime || !task.endTime) return null;
       
       // Get adjusted times for multi-day tasks
@@ -133,27 +173,106 @@ function DayDetailView({
       const startDecimal = parseTimeToDecimal(startTime);
       const endDecimal = parseTimeToDecimal(endTime);
       
-      // Calculate position relative to the top of the scroll view
-      // Each hour row is 80px tall, so position = decimalHour * 80px
-      const topPosition = startDecimal * hourHeight;
-      const height = (endDecimal - startDecimal) * hourHeight;
-      
       return {
-        task: {
-          ...task,
-          startTime,
-          endTime
-        },
-        style: {
-          position: 'absolute' as const,
-          top: topPosition,
-          height: height,
-          left: 80, // Width of hour label + margin
-          right: 20, // Right margin
-          zIndex: 1,
-        }
+        task: task, // Keep original task with original times
+        adjustedStartTime: startTime, // Store adjusted times separately
+        adjustedEndTime: endTime,
+        startDecimal,
+        endDecimal
       };
     }).filter(Boolean);
+
+    // Assign tasks to columns using optimal layout
+    const columns = assignTasksToColumns(tasksWithTimes);
+
+    // Calculate positioning for each column
+    const positionedTasks = columns.flatMap((column, columnIndex) => {
+      const columnId = `column-${columnIndex}`;
+      const isExpanded = expandedGroups.has(columnId);
+      const maxVisibleTasks = 3; // Show max 3 tasks per column, then collapse
+      
+      // Determine how many tasks to show in this column
+      const visibleTasks = isExpanded ? column : column.slice(0, maxVisibleTasks);
+      const hiddenCount = column.length - visibleTasks.length;
+      
+      // Calculate column width based on total number of columns
+      const totalColumns = columns.length;
+      const columnWidth = (taskContainerWidth - (taskMargin * (totalColumns - 1))) / totalColumns;
+      
+      const tasks = visibleTasks.map((taskData, taskIndex) => {
+        const { task, adjustedStartTime, adjustedEndTime, startDecimal, endDecimal } = taskData;
+        
+        // Calculate position relative to the top of the scroll view
+        const topPosition = startDecimal * hourHeight;
+        const height = (endDecimal - startDecimal) * hourHeight;
+        
+        // Calculate horizontal position based on column
+        const leftPosition = 80 + (columnIndex * (columnWidth + taskMargin));
+        
+        return {
+          task: task, // Use original task with original times for onPress
+          adjustedStartTime, // Store adjusted times for display
+          adjustedEndTime,
+          style: {
+            position: 'absolute' as const,
+            top: topPosition,
+            height: height,
+            left: leftPosition,
+            width: columnWidth,
+            zIndex: totalColumns > 1 ? 2 : 1, // Higher z-index for multiple columns
+            backgroundColor: totalColumns > 1 ? 
+              `rgba(0, 123, 255, ${0.8 - (columnIndex * 0.1)})` : // Different opacity for different columns
+              'rgba(0, 123, 255, 0.8)', // Standard color for single column
+            borderRadius: 4,
+            padding: 4,
+            margin: 1,
+          }
+        };
+      });
+      
+      // Add expand/collapse indicator if there are hidden tasks in this column
+      if (hiddenCount > 0) {
+        const firstTask = visibleTasks[0];
+        const { startDecimal, endDecimal } = firstTask;
+        const topPosition = startDecimal * hourHeight;
+        const height = (endDecimal - startDecimal) * hourHeight;
+        const leftPosition = 80 + (columnIndex * (columnWidth + taskMargin));
+        
+        tasks.push({
+          task: {
+            id: `expand-${columnId}`,
+            title: `+${hiddenCount} more`,
+            description: '',
+            completed: false,
+            createdAt: '',
+            scheduledDate: '',
+            endDate: '',
+            startTime: '',
+            endTime: ''
+          },
+          style: {
+            position: 'absolute' as const,
+            top: topPosition,
+            height: height,
+            left: leftPosition,
+            width: Math.min(80, columnWidth),
+            zIndex: 3,
+            backgroundColor: 'rgba(0, 123, 255, 0.6)',
+            borderRadius: 4,
+            padding: 4,
+            margin: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+          },
+          isExpandButton: true,
+          groupId: columnId
+        });
+      }
+      
+      return tasks;
+    });
+
+    return positionedTasks;
   };
 
   // Format header date
@@ -182,6 +301,19 @@ function DayDetailView({
   // Direct dismiss without animation
   const handleDismiss = () => {
     onDismiss();
+  };
+
+  // Handle expand/collapse of overlapping task groups
+  const handleExpandCollapse = (groupId: string) => {
+    setExpandedGroups(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(groupId)) {
+        newSet.delete(groupId);
+      } else {
+        newSet.add(groupId);
+      }
+      return newSet;
+    });
   };
 
   return (
@@ -244,16 +376,48 @@ function DayDetailView({
                 ))}
               
               {/* Task blocks with precise positioning */}
-              {getAllTasksWithPositioning().map(({ task, style }, index) => (
-                <TouchableOpacity
-                  key={task.id}
-                  style={[styles.taskItem, style]}
-                  onPress={() => onTaskPress(task)}
-                >
-                  <Text style={styles.taskTitle} numberOfLines={1}>{task.title}</Text>
-                  <Text style={styles.taskTime}>{task.startTime} - {task.endTime}</Text>
-                </TouchableOpacity>
-              ))}
+              {getAllTasksWithPositioning().map(({ task, adjustedStartTime, adjustedEndTime, style, isExpandButton, groupId }, index) => {
+                // Determine if this is a narrow overlapping task
+                const isNarrowTask = style.width && style.width < 100;
+                
+                // Handle expand/collapse button
+                if (isExpandButton && groupId) {
+                  return (
+                    <TouchableOpacity
+                      key={task.id}
+                      style={[styles.taskItem, style]}
+                      onPress={() => handleExpandCollapse(groupId)}
+                    >
+                      <Text style={styles.expandButtonText}>
+                        {task.title}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                }
+                
+                return (
+                  <TouchableOpacity
+                    key={task.id}
+                    style={[styles.taskItem, style]}
+                    onPress={() => onTaskPress(task)} // Pass original task with original times
+                  >
+                    <Text 
+                      style={[
+                        styles.taskTitle, 
+                        isNarrowTask && styles.taskTitleNarrow
+                      ]} 
+                      numberOfLines={isNarrowTask ? 1 : 2}
+                    >
+                      {task.title}
+                    </Text>
+                    {!isNarrowTask && (
+                      <Text style={styles.taskTime}>
+                        {adjustedStartTime} - {adjustedEndTime}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </ScrollView>
         </View>
@@ -359,10 +523,21 @@ const styles = StyleSheet.create({
     color: 'white',
     marginBottom: 2,
   },
+  taskTitleNarrow: {
+    fontSize: 10,
+    fontWeight: '600',
+    marginBottom: 0,
+  },
   taskTime: {
     fontSize: 10,
     color: 'white',
     opacity: 0.8,
+  },
+  expandButtonText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: 'white',
+    textAlign: 'center',
   },
 });
 
