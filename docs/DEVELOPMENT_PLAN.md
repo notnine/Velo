@@ -129,6 +129,31 @@
 - [x] **Preserve Original Task Data**: Modified DayDetailView to pass original task objects to task details modal
 - [x] **Test Multi-Day Task Consistency**: Verify time display matches across all views and shows original times everywhere
 
+### **Todo List Drag and Reorder** ✅ **ENABLED (Long-Press)**:
+- [x] **Install Drag and Drop Library**: Added react-native-draggable-flatlist for drag functionality
+- [x] **Update Home Page Task List**: Replaced FlatList with DraggableFlatList component
+- [x] **Add Task Order State**: Added order/priority field to Task model in Redux store
+- [x] **Implement Drag Handles**: Added visual drag handles to each todo item
+- [x] **Update Task Reorder Logic**: Implemented onDragEnd handler to update task order in Redux
+- [x] **Persist Task Order**: Task order automatically saved to AsyncStorage via existing middleware
+- [x] **Add Visual Feedback**: Enhanced drag preview with scaling, shadows, and active state indicators
+- [x] **Enable Long-Press Drag Always**: Remove Reorder toggle; long-press initiates drag
+- [x] **Remove Arrow Reorder UI**: Clean item UI; only long-press drag
+- [x] **Persist Order on Drop**: Dispatch `reorderTasks` with new indices
+- [x] **Basic Stability Tests**: Verify add/edit/delete still work after reordering
+
+### **Todo List Reordering – Code Cleanup (Concise Tasks)**
+- [ ] Remove leftover Reorder UI code: delete toggle state/handlers in `/(app)/index.tsx`
+- [ ] Prune unused props/styles in `components/TaskItem.tsx` (old arrows/`reorderControls`)
+- [ ] Remove unused imports (e.g., `Button`, `FlatList`) in affected files
+- [ ] Keep long-press drag always on: `activationDistance=0`; no conditional logic
+- [ ] Simplify reorder dispatch: single `reorderTasks` with index-based `newOrder`
+- [ ] Ensure persistence: confirm `loadStoredTasks` sets default `order` for legacy items
+- [ ] Remove any Reanimated/Worklets remnants from dependencies (no `react-native-worklets-core`)
+- [ ] Pin `react-native-reanimated` to SDK-compatible version; remove any local shims; clear caches
+- [ ] Verify `babel.config.js` has `'react-native-reanimated/plugin'` last
+- [ ] Sanity pass: re-run build, drag, add/edit/delete; commit only minimal changes
+
 ### **Voice Task Management**:
 - [ ] **Add Edit Task Action**: Add "update_task" action to backend system prompt
 - [ ] **Add Delete Task Action**: Add "delete_task" action to backend system prompt

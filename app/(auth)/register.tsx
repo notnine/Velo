@@ -39,7 +39,7 @@ export default function RegisterScreen() {
 
       if (error) throw error;
 
-      router.replace('/');
+      router.replace('/(auth)');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {

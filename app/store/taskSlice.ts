@@ -33,6 +33,7 @@ export interface Task {
   endDate: string | null; // ISO string format - end date for overnight tasks
   startTime: string | null; // Format: "1:00PM"
   endTime: string | null; // Format: "2:00PM"
+  order: number; // Order/priority for timeless tasks (lower number = higher priority)
 }
 
 interface TaskState {
@@ -62,6 +63,10 @@ export const taskSlice = createSlice({
       // Check if this is a timeless task (no dates provided)
       const isTimelessTask = !startDate || !endDate;
       
+      // For timeless tasks, assign order based on current timestamp
+      // For scheduled tasks, use 0 (no ordering needed)
+      const order = isTimelessTask ? Date.now() : 0;
+
       const newTask: Task = {
         id: generateUUID(),
         title: title,
@@ -79,7 +84,8 @@ export const taskSlice = createSlice({
           hour: 'numeric',
           minute: '2-digit',
           hour12: true
-        }).replace(/\s+/g, '')
+        }).replace(/\s+/g, ''),
+        order: order
       };
       state.items.push(newTask);
     },
@@ -141,6 +147,15 @@ export const taskSlice = createSlice({
     clearAllTasks: (state) => {
       state.items = [];
     },
+    reorderTasks: (state, action: PayloadAction<{ taskId: string; newOrder: number }[]>) => {
+      // Update the order of tasks based on the new order array
+      action.payload.forEach(({ taskId, newOrder }) => {
+        const task = state.items.find(item => item.id === taskId);
+        if (task) {
+          task.order = newOrder;
+        }
+      });
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -160,5 +175,5 @@ export const taskSlice = createSlice({
   },
 });
 
-export const { addTask, updateTaskSchedule, updateTaskTime, toggleTask, deleteTask, updateTask, clearAllTasks } = taskSlice.actions;
+export const { addTask, updateTaskSchedule, updateTaskTime, toggleTask, deleteTask, updateTask, clearAllTasks, reorderTasks } = taskSlice.actions;
 export default taskSlice.reducer; 

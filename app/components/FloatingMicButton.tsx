@@ -8,7 +8,7 @@ interface FloatingMicButtonProps {
   isListening: boolean;
 }
 
-export const FloatingMicButton: React.FC<FloatingMicButtonProps> = ({ onPress, isListening }) => {
+const FloatingMicButton: React.FC<FloatingMicButtonProps> = ({ onPress, isListening }) => {
   const testTTS = async () => {
     console.log('[FloatingMicButton] Testing TTS...');
     try {
@@ -82,4 +82,6 @@ const styles = StyleSheet.create({
   testButton: {
     backgroundColor: '#34C759', // Green color for test button
   },
-}); 
+});
+
+export default FloatingMicButton; 
