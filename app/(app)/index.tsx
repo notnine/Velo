@@ -43,37 +43,32 @@ export default function TasksScreen() {
   const dispatch = useDispatch();
   const theme = useTheme();
 
-  // Filter tasks for today and sort by start time
-  const todaysTasks = useMemo(() => {
-    const today = formatLocalDateString(new Date());
+  // Filter tasks for timeless todo list (no scheduled times)
+  const timelessTasks = useMemo(() => {
     return tasks
       .filter(task => {
-        if (!task.scheduledDate) return false;
-        // Show task if it starts today OR ends today (overnight task)
-        return task.scheduledDate === today || (task.endDate && task.endDate === today && task.endDate !== task.scheduledDate);
+        // Show only tasks without scheduled dates (timeless tasks)
+        return !task.scheduledDate;
       })
       .sort((a, b) => {
-        // Sort by start time if available, otherwise keep original order
-        if (!a.startTime && !b.startTime) return 0;
-        if (!a.startTime) return 1;
-        if (!b.startTime) return -1;
-        return a.startTime.localeCompare(b.startTime);
+        // Sort by creation order (most recent first)
+        return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
       });
   }, [tasks]);
 
   const handleAddTask = (
     title: string, 
     description: string, 
-    startDate: Date,
-    endDate: Date
+    startDate?: Date,
+    endDate?: Date
   ) => {
     if (editingTask) {
       dispatch(updateTask({
         id: editingTask.id,
         title,
         description,
-        startDate,
-        endDate,
+        startDate: startDate || new Date(),
+        endDate: endDate || new Date(),
       }));
     } else {
       dispatch(addTask({ 
@@ -109,9 +104,9 @@ export default function TasksScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Text variant="headlineMedium">Today's Tasks</Text>
+          <Text variant="headlineMedium">Todo List</Text>
           <Text variant="bodyMedium" style={styles.taskCount}>
-            {todaysTasks.length} task{todaysTasks.length !== 1 ? 's' : ''}
+            {timelessTasks.length} task{timelessTasks.length !== 1 ? 's' : ''}
           </Text>
         </View>
         <View style={styles.headerRight}>
@@ -127,7 +122,7 @@ export default function TasksScreen() {
       {/* Remove conversation state indicator, mic button, and ended message */}
 
       <FlatList
-        data={todaysTasks}
+        data={timelessTasks}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <TaskItem
@@ -139,8 +134,8 @@ export default function TasksScreen() {
         )}
         ListEmptyComponent={() => (
           <View style={styles.emptyState}>
-            <Text variant="bodyLarge">No tasks for today</Text>
-            <Text variant="bodyMedium">Add a task by tapping the + button</Text>
+            <Text variant="bodyLarge">No tasks yet</Text>
+            <Text variant="bodyMedium">Add a timeless task by tapping the + button</Text>
           </View>
         )}
       />

@@ -64,16 +64,31 @@ const getMonthData = (year: number, month: number, tasks: Task[]): MonthData => 
   // Single pass through tasks to populate the map
   for (const task of tasks) {
     if (task.scheduledDate && task.scheduledDate.startsWith(monthStr)) {
-      const tasksForDate = taskMap.get(task.scheduledDate);
-      if (tasksForDate) {
-        tasksForDate.push(task);
+      // For single-day tasks (same start and end date), always show them
+      if (task.scheduledDate === task.endDate) {
+        const tasksForDate = taskMap.get(task.scheduledDate);
+        if (tasksForDate) {
+          tasksForDate.push(task);
+        }
+      } else {
+        // For multi-day tasks, don't show on start date if it starts at midnight
+        if (task.startTime !== '12:00AM') {
+          const tasksForDate = taskMap.get(task.scheduledDate);
+          if (tasksForDate) {
+            tasksForDate.push(task);
+          }
+        }
       }
     }
     // Only add to endDate if it's different from scheduledDate (multi-day tasks)
+    // and doesn't end at midnight (12:00AM) - edge case fix
     if (task.endDate && task.endDate.startsWith(monthStr) && task.endDate !== task.scheduledDate) {
-      const tasksForDate = taskMap.get(task.endDate);
-      if (tasksForDate) {
-        tasksForDate.push(task);
+      // Don't show task on end date if it ends at midnight
+      if (task.endTime !== '12:00AM') {
+        const tasksForDate = taskMap.get(task.endDate);
+        if (tasksForDate) {
+          tasksForDate.push(task);
+        }
       }
     }
   }
@@ -213,14 +228,14 @@ export default function CalendarScreen() {
            isCurrentMonth; // Only highlight if it's actually in the current month
   };
 
-  const handleSubmit = useCallback((title: string, description: string, startDate: Date, endDate: Date) => {
+  const handleSubmit = useCallback((title: string, description: string, startDate?: Date, endDate?: Date) => {
     if (selectedTask) {
       dispatch(updateTask({
         id: selectedTask.id,
         title,
         description,
-        startDate,
-        endDate,
+        startDate: startDate || new Date(),
+        endDate: endDate || new Date(),
       }));
     } else {
       dispatch(addTask({
