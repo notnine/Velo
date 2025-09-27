@@ -174,11 +174,9 @@ function DayDetailView({
       const endDecimal = parseTimeToDecimal(endTime);
       
       return {
-        task: {
-          ...task,
-          startTime,
-          endTime
-        },
+        task: task, // Keep original task with original times
+        adjustedStartTime: startTime, // Store adjusted times separately
+        adjustedEndTime: endTime,
         startDecimal,
         endDecimal
       };
@@ -202,7 +200,7 @@ function DayDetailView({
       const columnWidth = (taskContainerWidth - (taskMargin * (totalColumns - 1))) / totalColumns;
       
       const tasks = visibleTasks.map((taskData, taskIndex) => {
-        const { task, startDecimal, endDecimal } = taskData;
+        const { task, adjustedStartTime, adjustedEndTime, startDecimal, endDecimal } = taskData;
         
         // Calculate position relative to the top of the scroll view
         const topPosition = startDecimal * hourHeight;
@@ -212,7 +210,9 @@ function DayDetailView({
         const leftPosition = 80 + (columnIndex * (columnWidth + taskMargin));
         
         return {
-          task: taskData.task, // Use original task with original times
+          task: task, // Use original task with original times for onPress
+          adjustedStartTime, // Store adjusted times for display
+          adjustedEndTime,
           style: {
             position: 'absolute' as const,
             top: topPosition,
@@ -376,7 +376,7 @@ function DayDetailView({
                 ))}
               
               {/* Task blocks with precise positioning */}
-              {getAllTasksWithPositioning().map(({ task, style, isExpandButton, groupId }, index) => {
+              {getAllTasksWithPositioning().map(({ task, adjustedStartTime, adjustedEndTime, style, isExpandButton, groupId }, index) => {
                 // Determine if this is a narrow overlapping task
                 const isNarrowTask = style.width && style.width < 100;
                 
@@ -399,7 +399,7 @@ function DayDetailView({
                   <TouchableOpacity
                     key={task.id}
                     style={[styles.taskItem, style]}
-                    onPress={() => onTaskPress(task)}
+                    onPress={() => onTaskPress(task)} // Pass original task with original times
                   >
                     <Text 
                       style={[
@@ -412,7 +412,7 @@ function DayDetailView({
                     </Text>
                     {!isNarrowTask && (
                       <Text style={styles.taskTime}>
-                        {task.startTime} - {task.endTime}
+                        {adjustedStartTime} - {adjustedEndTime}
                       </Text>
                     )}
                   </TouchableOpacity>
