@@ -127,7 +127,7 @@
 - [x] **Fix Calendar View Time Display**: Calendar view was already correct (no time modification)
 - [x] **Investigate Task Object Modification**: Found issue in DayDetailView where task objects were being modified
 - [x] **Preserve Original Task Data**: Modified DayDetailView to pass original task objects to task details modal
-- [ ] **Test Multi-Day Task Consistency**: Verify time display matches across all views and shows original times everywhere
+- [x] **Test Multi-Day Task Consistency**: Verify time display matches across all views and shows original times everywhere
 
 ### **Voice Task Management**:
 - [ ] **Add Edit Task Action**: Add "update_task" action to backend system prompt
