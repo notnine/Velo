@@ -28,7 +28,7 @@ export default function SignInScreen() {
       if (error) throw error;
       
       console.log('Sign in successful:', data.session ? 'Has session' : 'No session');
-      router.replace('/(app)/');
+      router.replace('/(app)');
     } catch (err) {
       console.error('Sign in error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred');

@@ -18,7 +18,15 @@ export const loadStoredTasks = createAsyncThunk(
   async () => {
     try {
       const tasksJson = await AsyncStorage.getItem(TASKS_STORAGE_KEY);
-      return tasksJson ? JSON.parse(tasksJson) as Task[] : [];
+      if (tasksJson) {
+        const tasks = JSON.parse(tasksJson) as Task[];
+        // Ensure all tasks have an order field (for backward compatibility)
+        return tasks.map((task, index) => ({
+          ...task,
+          order: task.order ?? (task.scheduledDate ? 0 : index + 1) // Default order for existing tasks
+        }));
+      }
+      return [];
     } catch (error) {
       console.error('Failed to load tasks:', error);
       return [];

@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { Card, Text, IconButton, MD3Colors } from 'react-native-paper';
+import { Card, Text, IconButton } from 'react-native-paper';
 import { Task } from '../store/taskSlice';
 
 interface TaskItemProps {
@@ -12,12 +12,14 @@ interface TaskItemProps {
   onToggle: () => void;
   onDelete: () => void;
   onEdit: () => void;
+  onLongPress?: () => void;
+  isActive?: boolean;
 }
 
-export default function TaskItem({ task, onToggle, onDelete, onEdit }: TaskItemProps) {
+export default function TaskItem({ task, onToggle, onDelete, onEdit, onLongPress, isActive }: TaskItemProps) {
   return (
-    <Card style={styles.card} mode="elevated">
-      <TouchableOpacity onPress={onEdit}>
+    <Card style={[styles.card, isActive && styles.activeCard]} mode="elevated">
+      <TouchableOpacity onPress={onEdit} onLongPress={onLongPress} delayLongPress={150}>
         <Card.Content style={styles.content}>
           <View style={styles.leftSection}>
             <IconButton
@@ -88,6 +90,17 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     elevation: 2,
     borderRadius: 12,
+  },
+  activeCard: {
+    elevation: 12,
+    transform: [{ scale: 1.05 }],
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
   content: {
     flexDirection: 'row',
