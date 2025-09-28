@@ -143,15 +143,15 @@
 - [x] **Basic Stability Tests**: Verify add/edit/delete still work after reordering
 
 ### **Todo List Reordering – Code Cleanup (Concise Tasks)**
-- [ ] Remove leftover Reorder UI code: delete toggle state/handlers in `/(app)/index.tsx`
-- [ ] Prune unused props/styles in `components/TaskItem.tsx` (old arrows/`reorderControls`)
-- [ ] Remove unused imports (e.g., `Button`, `FlatList`) in affected files
-- [ ] Keep long-press drag always on: `activationDistance=0`; no conditional logic
-- [ ] Simplify reorder dispatch: single `reorderTasks` with index-based `newOrder`
-- [ ] Ensure persistence: confirm `loadStoredTasks` sets default `order` for legacy items
-- [ ] Remove any Reanimated/Worklets remnants from dependencies (no `react-native-worklets-core`)
-- [ ] Pin `react-native-reanimated` to SDK-compatible version; remove any local shims; clear caches
-- [ ] Verify `babel.config.js` has `'react-native-reanimated/plugin'` last
+- [x] Remove leftover Reorder UI code: delete toggle state/handlers in `/(app)/index.tsx`
+- [x] Prune unused props/styles in `components/TaskItem.tsx` (old arrows/`reorderControls`)
+- [x] Remove unused imports (e.g., `Button`, `FlatList`) in affected files
+- [x] Keep long-press drag always on: `activationDistance=0`; no conditional logic
+- [x] Simplify reorder dispatch: single `reorderTasks` with index-based `newOrder`
+- [x] Ensure persistence: confirm `loadStoredTasks` sets default `order` for legacy items
+- [x] Remove any Reanimated/Worklets remnants from dependencies (no `react-native-worklets-core`)
+- [x] Pin `react-native-reanimated` to SDK-compatible version; remove any local shims; clear caches
+- [x] Verify `babel.config.js` has `'react-native-reanimated/plugin'` last
 - [ ] Sanity pass: re-run build, drag, add/edit/delete; commit only minimal changes
 
 ### **Voice Task Management**:
