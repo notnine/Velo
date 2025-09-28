@@ -8,7 +8,7 @@ interface NavBarMicButtonProps {
   color: string; // Color from tab bar (active/inactive)
 }
 
-export const NavBarMicButton: React.FC<NavBarMicButtonProps> = ({ 
+const NavBarMicButton: React.FC<NavBarMicButtonProps> = ({ 
   onPress, 
   isListening, 
   color 
@@ -44,3 +44,5 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
 });
+
+export default NavBarMicButton;

@@ -3,12 +3,14 @@
  * toggle, and delete tasks using a floating action button and task list.
  */
 import React, { useState, useMemo } from 'react';
-import { View, StyleSheet, FlatList } from 'react-native';
+import 'react-native-reanimated';
+import { View, StyleSheet } from 'react-native';
+import DraggableFlatList, { RenderItemParams } from 'react-native-draggable-flatlist';
 import { Text, useTheme, IconButton } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
-import { Task, addTask, toggleTask, deleteTask, updateTask } from '../store/taskSlice';
+import { Task, addTask, toggleTask, deleteTask, updateTask, reorderTasks } from '../store/taskSlice';
 import TaskItem from '../../components/TaskItem';
 import AddTaskModal from '../../components/AddTaskModal';
 
@@ -51,8 +53,8 @@ export default function TasksScreen() {
         return !task.scheduledDate;
       })
       .sort((a, b) => {
-        // Sort by creation order (most recent first)
-        return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+        // Sort by order field (lower number = higher priority)
+        return a.order - b.order;
       });
   }, [tasks]);
 
@@ -100,6 +102,7 @@ export default function TasksScreen() {
     dispatch(deleteTask(id));
   };
 
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -121,15 +124,23 @@ export default function TasksScreen() {
       </View>
       {/* Remove conversation state indicator, mic button, and ended message */}
 
-      <FlatList
+      <DraggableFlatList
+        activationDistance={0}
         data={timelessTasks}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
+        onDragEnd={({ data, from, to }) => {
+          // Recompute order values preserving relative order
+          const updates = data.map((t, idx) => ({ taskId: t.id, newOrder: idx + 1 }));
+          dispatch(reorderTasks(updates));
+        }}
+        renderItem={({ item, drag, isActive }: RenderItemParams<Task>) => (
           <TaskItem
             task={item}
             onToggle={() => handleToggleTask(item.id)}
             onDelete={() => handleDeleteTask(item.id)}
             onEdit={() => handleEditTask(item)}
+            onLongPress={drag}
+            isActive={isActive}
           />
         )}
         ListEmptyComponent={() => (
