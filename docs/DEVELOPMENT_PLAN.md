@@ -152,7 +152,32 @@
 - [x] Remove any Reanimated/Worklets remnants from dependencies (no `react-native-worklets-core`)
 - [x] Pin `react-native-reanimated` to SDK-compatible version; remove any local shims; clear caches
 - [x] Verify `babel.config.js` has `'react-native-reanimated/plugin'` last
-- [ ] Sanity pass: re-run build, drag, add/edit/delete; commit only minimal changes
+- [x] Sanity pass: re-run build, drag, add/edit/delete; commit only minimal changes
+
+### **Monetization (RevenueCat Subscriptions) — Planned**
+- [ ] Decide plans and pricing (Free, Pro monthly/yearly)
+- [ ] App stores: create products `velo_pro_monthly`, `velo_pro_yearly`
+- [ ] RevenueCat: create project, entitlement `pro`, offering `default`
+- [ ] Link store products to RC offering `default`
+- [ ] Expo app: install Purchases SDK + config plugin; add RC keys to `app.config.ts`
+- [ ] Initialize Purchases and `logIn(supabaseUserId)` on app start
+- [ ] Fetch offerings + customerInfo; store `isPro` in Redux selector/hook
+- [ ] Build minimal Paywall (Monthly/Yearly, Restore Purchases)
+- [ ] Gate premium UI using `useEntitlement('pro')`
+- [ ] Backend: `POST /api/subscriptions/verify` (RevenueCat REST)
+- [ ] Backend: `POST /api/webhooks/revenuecat` (mirror to Supabase)
+- [ ] Enforce LLM usage quotas in `backend/app/api/llm.py`
+- [ ] QA: purchase, restore, cancel, upgrade/downgrade; sandbox test
+
+Rationale:
+- Native in‑app digital features must use Apple/Google IAP; RevenueCat unifies platforms
+- Keeps codebase simple; no custom receipt validation, one entitlement source of truth
+
+Proposed defaults (tweak anytime):
+- Entitlement: `pro`
+- Products: `pro_monthly`, `pro_yearly`
+- Pricing: $4.99/mo, $29.99/yr, 7‑day trial
+- Quotas: Free 50 LLM req/day; Pro 1,000/day (server‑enforced)
 
 ### **Voice Task Management**:
 - [ ] **Add Edit Task Action**: Add "update_task" action to backend system prompt

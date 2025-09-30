@@ -35,6 +35,12 @@ Velo's MVP consists of the 3 pages. User data (tasks & preferences) are stored l
 - OpenAI API for task understanding and scheduling
 - Minimal business logic
 
+## Monetization
+- Mobile (iOS/Android): RevenueCat + native IAP (App Store, Play Billing)
+- Entitlement model with `pro` controlling premium access
+- Backend: FastAPI verifies via RevenueCat REST, handles webhooks, enforces LLM quotas
+- Web (optional future): Stripe checkout mapped to same entitlements via RevenueCat or backend
+
 ## Core Features
 ### Task Management
 - Create, read, update, delete tasks
