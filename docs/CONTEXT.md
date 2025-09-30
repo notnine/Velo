@@ -34,6 +34,7 @@ Velo's MVP consists of the 3 pages. User data (tasks & preferences) are stored l
 - Supabase for authentication and database
 - OpenAI API for task understanding and scheduling
 - Minimal business logic
+ - RevenueCat for subscriptions and IAP entitlements
 
 ## Monetization
 - Mobile (iOS/Android): RevenueCat + native IAP (App Store, Play Billing)

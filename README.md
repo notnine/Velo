@@ -59,6 +59,7 @@ The app revolves around three core views:
 - FastAPI (Python)  
 - Supabase (Auth & DB, future integration)  
 - OpenAI API (LLM scheduling assistance)
+ - RevenueCat (subscriptions & IAP entitlements)
 
 ---
 
