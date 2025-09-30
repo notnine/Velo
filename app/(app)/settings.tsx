@@ -9,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
 import { router } from 'expo-router';
 import { Settings as TimePreferences } from '../../components/Settings';
+import { Link } from 'expo-router';
 
 export default function SettingsScreen() {
   const handleSignOut = async () => {
@@ -37,6 +38,13 @@ export default function SettingsScreen() {
 
         <View style={styles.section}>
           <Text variant="titleMedium" style={styles.sectionTitle}>Account</Text>
+          <Button
+            mode="contained"
+            onPress={() => router.push('/(app)/paywall')}
+            style={styles.goProButton}
+          >
+            Go Pro
+          </Button>
           <Button
             mode="contained-tonal"
             onPress={handleSignOut}
@@ -78,5 +86,8 @@ const styles = StyleSheet.create({
   },
   signOutButton: {
     marginTop: 8,
+  },
+  goProButton: {
+    marginBottom: 8,
   },
 }); 

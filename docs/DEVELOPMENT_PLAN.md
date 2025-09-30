@@ -154,20 +154,27 @@
 - [x] Verify `babel.config.js` has `'react-native-reanimated/plugin'` last
 - [x] Sanity pass: re-run build, drag, add/edit/delete; commit only minimal changes
 
-### **Monetization (RevenueCat Subscriptions) — Planned**
-- [ ] Decide plans and pricing (Free, Pro monthly/yearly)
-- [ ] App stores: create products `velo_pro_monthly`, `velo_pro_yearly`
-- [ ] RevenueCat: create project, entitlement `pro`, offering `default`
-- [ ] Link store products to RC offering `default`
-- [ ] Expo app: install Purchases SDK + config plugin; add RC keys to `app.config.ts`
-- [ ] Initialize Purchases and `logIn(supabaseUserId)` on app start
-- [ ] Fetch offerings + customerInfo; store `isPro` in Redux selector/hook
-- [ ] Build minimal Paywall (Monthly/Yearly, Restore Purchases)
-- [ ] Gate premium UI using `useEntitlement('pro')`
-- [ ] Backend: `POST /api/subscriptions/verify` (RevenueCat REST)
-- [ ] Backend: `POST /api/webhooks/revenuecat` (mirror to Supabase)
-- [ ] Enforce LLM usage quotas in `backend/app/api/llm.py`
-- [ ] QA: purchase, restore, cancel, upgrade/downgrade; sandbox test
+### **Monetization (RevenueCat) — Phase 1: Without Store Accounts**
+- [ ] Create RevenueCat project; copy iOS/Android Public SDK keys
+- [ ] Add keys to `.env` (`EXPO_PUBLIC_REVENUECAT_IOS_KEY`, `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY`)
+- [x] Expo app: add `expo-build-properties` plugin in `app.config.ts`
+- [x] Initialize Purchases and `logIn(supabaseUserId)` on app start
+- [x] Create `useEntitlement('pro')` hook and wire entitlement listener
+- [x] Add Paywall screen that handles empty/absent offerings gracefully
+- [ ] Prebuild iOS and run dev build; verify SDK loads (no purchases yet)
+- [ ] Verify connectivity: user appears in RC Customers after login
+- [ ] Backend: stub `POST /api/webhooks/revenuecat`; accept and log test webhook
+- [ ] Backend: stub `POST /api/subscriptions/verify`; call RC REST and return entitlements
+- [ ] Optional: dev flag to simulate `isPro=true` to test UI gates
+- [ ] Gate premium UI with `useEntitlement('pro')` (falls back to dev flag in dev)
+
+### **Monetization — Phase 2: Store Setup & Purchases (Later)**
+- [ ] App Store Connect: subscription group + `velo_pro_monthly`, `velo_pro_yearly`
+- [ ] Google Play Console: matching products
+- [ ] RevenueCat: entitlement `pro`, offering `default`; link store products
+- [ ] Paywall: show real price strings from offerings
+- [ ] QA: sandbox purchase, restore, upgrade/downgrade; verify webhook mirrors to Supabase
+- [ ] Enforce LLM quotas based on mirrored entitlements in `backend/app/api/llm.py`
 
 Rationale:
 - Native in‑app digital features must use Apple/Google IAP; RevenueCat unifies platforms

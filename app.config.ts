@@ -23,7 +23,8 @@ const config = {
       supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
     },
     plugins: [
-      'expo-router'
+      'expo-router',
+      'expo-build-properties'
     ],
     newArchEnabled: true
   }

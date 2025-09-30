@@ -51,6 +51,10 @@
       <key>NSAllowsLocalNetworking</key>
       <true/>
     </dict>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>This app uses the microphone to capture your voice for task creation.</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>This app uses speech recognition to let you create and manage tasks with your voice.</string>
     <key>NSUserActivityTypes</key>
     <array>
       <string>$(PRODUCT_BUNDLE_IDENTIFIER).expo.index_route</string>
@@ -81,9 +85,5 @@
     <string>Light</string>
     <key>UIViewControllerBasedStatusBarAppearance</key>
     <false/>
-    <key>NSSpeechRecognitionUsageDescription</key>
-    <string>This app uses speech recognition to let you create and manage tasks with your voice.</string>
-    <key>NSMicrophoneUsageDescription</key>
-    <string>This app uses the microphone to capture your voice for task creation.</string>
   </dict>
 </plist>
