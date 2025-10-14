@@ -21,6 +21,9 @@ const config = {
     extra: {
       supabaseUrl: process.env.SUPABASE_URL,
       supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
+      revenuecatIOSKey: process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY,
+      revenuecatAndroidKey: process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY,
+      devForcePro: process.env.EXPO_PUBLIC_DEV_FORCE_PRO ?? '0',
     },
     plugins: [
       'expo-router',

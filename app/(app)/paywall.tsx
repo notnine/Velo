@@ -1,19 +1,23 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { Text, Button, Card } from 'react-native-paper';
-import Purchases, { Offering, PurchasesPackage, CustomerInfo } from 'react-native-purchases';
+import Purchases, { PurchasesPackage, CustomerInfo } from 'react-native-purchases';
+import { Platform } from 'react-native';
+import { isPurchasesConfigured } from '../../lib/revenuecat';
+import Constants from 'expo-constants';
 import { useEntitlement } from '../lib/useEntitlement';
 import { router } from 'expo-router';
 
 export default function PaywallScreen() {
   const isPro = useEntitlement('pro');
-  const [offering, setOffering] = useState<Offering | null>(null);
+  const devForcePro = ((Constants.expoConfig?.extra as any)?.devForcePro ?? '0') === '1';
+  const [offering, setOffering] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isPro) {
+    if (isPro || devForcePro) {
       router.back();
     }
   }, [isPro]);
@@ -24,6 +28,11 @@ export default function PaywallScreen() {
       try {
         setLoading(true);
         setError(null);
+        if (!isPurchasesConfigured()) {
+          setError(Platform.OS === 'ios' ? 'In-app purchases not configured on iOS yet.' : 'Purchases not configured.');
+          setOffering(null);
+          return;
+        }
         const offerings = await Purchases.getOfferings();
         const current = offerings.current || null;
         if (mounted) setOffering(current);
@@ -38,11 +47,12 @@ export default function PaywallScreen() {
     };
   }, []);
 
-  const monthly = useMemo<PurchasesPackage | undefined>(() => offering?.monthly, [offering]);
-  const annual = useMemo<PurchasesPackage | undefined>(() => offering?.annual, [offering]);
+  const monthly = useMemo<any>(() => offering?.monthly, [offering]);
+  const annual = useMemo<any>(() => offering?.annual, [offering]);
 
   const handlePurchase = async (pkg: PurchasesPackage | undefined) => {
     if (!pkg) return;
+    if (!isPurchasesConfigured()) return;
     try {
       setPurchasing(true);
       setError(null);
@@ -64,6 +74,7 @@ export default function PaywallScreen() {
   };
 
   const handleRestore = async () => {
+    if (!isPurchasesConfigured()) return;
     try {
       setPurchasing(true);
       setError(null);
